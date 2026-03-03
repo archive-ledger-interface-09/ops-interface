@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ASTF Internal Records</title>
+
+<style>
+  :root{
+    --bg:#070a0e;
+    --panel:#0b1118;
+    --panel2:#0a0f14;
+    --border:#1a2633;
+    --border2:#223243;
+    --text:#9cc4ff;
+    --muted:#7f97b2;
+    --dim:#5f7284;
+    --danger:#f8696b;
+    --shadow:0 18px 60px rgba(0,0,0,.55);
+    --radius:12px;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background:
+      radial-gradient(1200px 500px at 50% -10%, rgba(100,160,255,.08), transparent 60%),
+      radial-gradient(900px 450px at 15% 0%, rgba(134,247,176,.06), transparent 55%),
+      linear-gradient(180deg, #05070a 0%, var(--bg) 45%, #05070a 100%);
+    color:var(--text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    letter-spacing:.15px;
+  }
+
+  .topbar{
+    height:44px; display:flex; align-items:center; justify-content:space-between;
+    padding:0 16px; gap:10px;
+    border-bottom:1px solid rgba(34,50,67,.55);
+    background: linear-gradient(180deg, rgba(12,17,24,.85), rgba(8,11,15,.55));
+    backdrop-filter: blur(6px);
+    font-size:12px; color:var(--dim);
+  }
+  .dot{ width:8px;height:8px;border-radius:50%; background: rgba(156,196,255,.35); box-shadow:0 0 10px rgba(156,196,255,.18);}
+  .topLeft{ display:flex; align-items:center; gap:10px; }
+  .topRight{ display:flex; align-items:center; gap:10px; }
+  .pill{
+    font-size:11px; color: var(--dim);
+    border:1px solid rgba(34,50,67,.65);
+    padding:6px 10px; border-radius: 999px;
+    background: rgba(10,15,20,.40);
+    white-space:nowrap;
+  }
+
+  .wrap{ height: calc(100% - 44px); display:grid; place-items:center; padding: 18px 14px 26px; }
+  .card{
+    width:min(1280px, 100%);
+    height:min(820px, calc(100vh - 90px));
+    border:1px solid rgba(34,50,67,.75);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow:hidden;
+    background: linear-gradient(180deg, rgba(13,18,25,.85) 0%, rgba(10,15,20,.85) 100%);
+  }
+
+  /* Login */
+  .login{ height:100%; display:grid; place-items:center; padding:22px; }
+  .loginBox{
+    width:min(860px, 100%);
+    border:1px solid rgba(34,50,67,.70);
+    background: linear-gradient(180deg, rgba(11,17,24,.78), rgba(8,12,16,.78));
+    border-radius: var(--radius);
+    padding: 28px 28px 26px;
+  }
+  .loginTitle{ margin:0; font-size: 14px; letter-spacing: 2.4px; font-weight: 800; }
+  .loginSub{ margin:8px 0 22px; color:var(--dim); font-size:11px; line-height:1.55; }
+  .field{
+    width:100%; padding:10px 12px; margin: 8px 0;
+    background: rgba(10,15,20,.65);
+    border:1px solid rgba(34,50,67,.75);
+    border-radius: 12px;
+    color: var(--text);
+    outline:none;
+    font-size:12px;
+  }
+  .field:focus{
+    border-color: rgba(156,196,255,.70);
+    box-shadow: 0 0 0 3px rgba(156,196,255,.10);
+  }
+  .btn{
+    padding:10px 14px;
+    background: rgba(20,30,42,.65);
+    border:1px solid rgba(34,50,67,.85);
+    color: var(--text);
+    border-radius: 12px;
+    cursor:pointer;
+    font-size:12px;
+  }
+  .btn:hover{ background: rgba(24,36,50,.78); }
+  .error{ margin-top:12px; color:var(--danger); font-size:12px; display:none; }
+
+  /* Auth loading bar (short + green only here) */
+  .authLoad {
+    margin-top: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(34,50,67,.75);
+    background: rgba(10,15,20,.55);
+    overflow: hidden;
+    display: none;
+  }
+  .authLoadBar {
+    height: 100%;
+    width: 0%;
+    border-radius: 999px;
+    background: #22c55e;
+    box-shadow: 0 0 14px rgba(34,197,94,.25);
+    animation: authProgress 520ms ease-out forwards;
+  }
+  @keyframes authProgress {
+    0%   { width: 0%; }
+    65%  { width: 82%; }
+    100% { width: 100%; }
+  }
+
+  /* App layout */
+  .app{ height:100%; display:none; grid-template-rows: 1fr; }
+  .grid{ height:100%; display:grid; grid-template-columns: 280px 420px 1fr; }
+
+  /* Left sidebar */
+  .left{
+    border-right:1px solid rgba(34,50,67,.60);
+    background: rgba(10,15,20,.35);
+    padding: 12px;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .identity{
+    border:1px solid rgba(34,50,67,.65);
+    border-radius: 14px;
+    background: rgba(10,15,20,.45);
+    padding: 10px;
+  }
+  .idTop{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .user{ font-size:12px; font-weight:800; letter-spacing:1px; text-transform: uppercase; }
+  .role{ font-size:11px; color: var(--dim); margin-top:6px; line-height:1.35; }
+  .logout{
+    padding: 6px 8px; font-size:11px;
+    background: rgba(20,30,42,.45);
+    border:1px solid rgba(34,50,67,.65);
+    border-radius: 12px;
+    cursor:pointer; color: var(--muted);
+  }
+  .logout:hover{ background: rgba(24,36,50,.65); color: var(--text); }
+
+  .sectionLabel{
+    font-size:11px; color: var(--dim);
+    letter-spacing:1.2px; text-transform: uppercase;
+    margin: 2px 2px 0;
+  }
+
+  .nav{ display:flex; flex-direction:column; gap:8px; overflow:auto; padding-right:4px; }
+  .navItem{
+    padding: 10px 10px;
+    border-radius: 14px;
+    border:1px solid rgba(34,50,67,.55);
+    background: rgba(10,15,20,.35);
+    cursor:pointer;
+    color: var(--muted);
+    font-size:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .navItem:hover{ background: rgba(16,23,32,.55); color: var(--text); }
+  .navItem.active{
+    background: rgba(20,30,42,.60);
+    border-color: rgba(156,196,255,.40);
+    box-shadow: 0 0 0 3px rgba(156,196,255,.07);
+    color: var(--text);
+  }
+  .badge{
+    font-size:11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border:1px solid rgba(34,50,67,.65);
+    color: var(--dim);
+    background: rgba(10,15,20,.35);
+    white-space:nowrap;
+  }
+
+  /* Middle list */
+  .mid{
+    border-right:1px solid rgba(34,50,67,.60);
+    background: rgba(8,12,16,.35);
+    display:flex;
+    flex-direction:column;
+    min-width: 0;
+  }
+  .listHeader{
+    padding: 12px;
+    border-bottom:1px solid rgba(34,50,67,.55);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .listTitle{ font-size:12px; letter-spacing: 1.4px; font-weight:800; }
+  .search{
+    width: 220px;
+    padding: 8px 10px;
+    font-size:12px;
+    border-radius: 14px;
+    border:1px solid rgba(34,50,67,.70);
+    background: rgba(10,15,20,.55);
+    color: var(--text);
+    outline:none;
+  }
+  .search:focus{
+    border-color: rgba(156,196,255,.65);
+    box-shadow: 0 0 0 3px rgba(156,196,255,.09);
+  }
+  .list{
+    overflow:auto;
+    padding: 8px;
+    min-width: 0;
+  }
+  .item{
+    border:1px solid rgba(34,50,67,.50);
+    background: rgba(10,15,20,.35);
+    border-radius: 16px;
+    padding: 12px;
+    margin: 10px 6px;
+    cursor:pointer;
+  }
+  .item:hover{ background: rgba(16,23,32,.55); border-color: rgba(34,50,67,.75); }
+  .item.active{
+    background: rgba(20,30,42,.60);
+    border-color: rgba(156,196,255,.40);
+    box-shadow: 0 0 0 3px rgba(156,196,255,.07);
+  }
+  .itemTop{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .fname{ font-size:12px; font-weight:800; color: var(--text); }
+  .metaSmall{ font-size:11px; color: var(--dim); }
+  .desc{ margin-top:8px; font-size:11px; color: var(--muted); line-height:1.35; white-space:pre-wrap; }
+
+  /* Right viewer */
+  .right{
+    background: rgba(10,15,20,.25);
+    display:flex;
+    flex-direction:column;
+    min-width: 0;
+  }
+  .viewHeader{
+    padding: 14px 16px;
+    border-bottom:1px solid rgba(34,50,67,.55);
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .viewTitle{
+    font-size:13px;
+    font-weight:800;
+    letter-spacing: .8px;
+  }
+  .viewMeta{
+    margin-top:8px;
+    display:grid;
+    gap:4px;
+    font-size:11px;
+    color: var(--dim);
+    line-height:1.35;
+  }
+  .viewBody{
+    padding: 14px 16px 18px;
+    overflow:auto;
+    white-space: pre-wrap;
+    font-size:12px;
+    line-height:1.7;
+    color: var(--muted);
+  }
+  .empty{ padding: 18px 16px; color: var(--dim); font-size:12px; }
+
+  .miniBtn{
+    padding: 8px 10px;
+    font-size:12px;
+    border-radius:12px;
+    border:1px solid rgba(34,50,67,.85);
+    background: rgba(20,30,42,.55);
+    color: var(--text);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .miniBtn:hover{ background: rgba(24,36,50,.72); }
+
+  /* Toast */
+  .toast{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(34,50,67,.85);
+    background: rgba(11,17,24,.92);
+    color: var(--text);
+    font-size:12px;
+    box-shadow: var(--shadow);
+    z-index:9999;
+    opacity:0;
+    transform: translateY(10px);
+    transition: opacity .18s ease, transform .18s ease;
+    pointer-events:none;
+  }
+  .toast.show{
+    opacity:1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+
+<body>
+  <div class="topbar">
+    <div class="topLeft">
+      <span class="dot"></span>
+      <span>internal.astf.gov / archive-node / records</span>
+    </div>
+    <div class="topRight">
+      <span class="pill" id="netPill">Node: LOCAL</span>
+      <span class="pill" id="auditPill">Audit: ENABLED</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="card">
+
+      <!-- LOGIN -->
+      <div class="login" id="loginView">
+        <div class="loginBox">
+          <h1 class="loginTitle">ANTI-SECRECY TASKFORCE</h1>
+          <div class="loginSub">
+            INTERNAL RECORDS ACCESS — AUTHORIZED PERSONNEL ONLY<br>
+            Access level is recorded. Civilian audit exposure varies by file.
+          </div>
+
+          <input class="field" id="u" placeholder="Username" autocomplete="username" />
+          <input class="field" id="p" type="password" placeholder="Password" autocomplete="current-password" />
+          <button class="btn" id="loginBtn">Authenticate</button>
+
+          <div class="authLoad" id="authLoad">
+            <div class="authLoadBar" id="authLoadBar"></div>
+          </div>
+
+          <div class="error" id="err">ACCESS DENIED</div>
+
+          <div class="loginSub" style="margin-top:14px;">
+            Note: Static archive simulation. Visibility enforced by client-side clearance logic.
+          </div>
+        </div>
+      </div>
+
+      <!-- APP -->
+      <div class="app" id="appView">
+        <div class="grid">
+
+          <!-- LEFT -->
+          <aside class="left">
+            <div class="identity">
+              <div class="idTop">
+                <div>
+                  <div class="user" id="who">—</div>
+                  <div class="role" id="role">—</div>
+                </div>
+                <button class="logout" id="logoutBtn">Logout</button>
+              </div>
+              <div class="role" style="margin-top:10px;">
+                Session Tag: <span id="sess">—</span><br>
+                Access Trace: <span id="trace">—</span>
+              </div>
+            </div>
+
+            <div class="sectionLabel">Directories</div>
+            <div class="nav" id="nav"></div>
+
+            <div class="sectionLabel">Controls</div>
+            <button class="miniBtn" id="clearSelectionBtn">Clear Viewer</button>
+            <button class="miniBtn" id="showAuditBtn">View Audit Log</button>
+          </aside>
+
+          <!-- MIDDLE -->
+          <section class="mid">
+            <div class="listHeader">
+              <div class="listTitle" id="listTitle">—</div>
+              <input class="search" id="search" placeholder="Search within directory" />
+            </div>
+            <div class="list" id="list"></div>
+          </section>
+
+          <!-- RIGHT -->
+          <section class="right">
+            <div class="viewHeader">
+              <div>
+                <div class="viewTitle" id="viewTitle">No file selected</div>
+                <div class="viewMeta" id="viewMeta" style="display:none;"></div>
+              </div>
+              <div style="display:flex; gap:10px;">
+                <button class="miniBtn" id="copyBtn">Copy</button>
+                <button class="miniBtn" id="redactBtn">Toggle Redaction Overlay</button>
+              </div>
+            </div>
+
+            <div class="viewBody" id="viewBody">
+              <div class="empty">Select a directory, then select a file.</div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+/*
+  CREDENTIALS LIVE HERE.
+  You said you'll give everyone their own usernames — perfect.
+  Replace the keys + passwords in USERS with your private ones.
+
+  Note: This is a static site; anyone who opens Developer Tools can view the JS.
+  The UI will NOT display usernames, but a static site cannot truly secure secrets.
+*/
+const USERS = {
+  "astf.secure.usercmd.tomcat.fieldlead.04": { pass:"ELSAILGRA", role:"FIELD COMMAND — CLEARANCE IV", clearance:4 },
+  "astf.secure.userops.mink.technician.level2.17": { pass:"9dZzUPUK]kr*c2E3]r+shEd7", role:"TECH OPERATIONS — CLEARANCE II", clearance:2 },
+  "astf.secure.userops.bd.combatmed.level2.09": { pass:"M1KUM1KUCALLMEM1KU", role:"COMBAT MEDICAL — CLEARANCE II", clearance:2 },
+  "astf.secure.userops.johnny.private.level1.22": { pass:"H3R3C0M3SJ0HNNY", role:"FIELD SUPPORT — CLEARANCE I", clearance:1 },
+  "astf.secure.userovr.taskforce.oversight.level5.00": { pass:"TASKFORCE", role:"OVERSIGHT — CLEARANCE V", clearance:5 },
+
+  "astf.secure.userana.glassnode.unit03.level2.31": { pass:"GLASSNODE", role:"DATA ANALYSIS — CLEARANCE II", clearance:2 },
+  "astf.secure.userlog.quartermaster.unit.level1.71": { pass:"LOCKKEY71", role:"LOGISTICS — CLEARANCE I", clearance:1 },
+  "astf.secure.userovr.federal.liaison.redline.level5.02": { pass:"REDLINE", role:"FEDERAL OVERSIGHT — CLEARANCE V", clearance:5 }
+};
+
+let currentUser = null;
+let currentCategory = null;
+let activeFileId = null;
+let redactOverlay = false;
+
+/* Ash override (safe/in-universe) */
+let ashOverrideUnlocked = false;
+let keyBuffer = "";
+
+/* =========================
+   DIRECTORIES
+========================= */
+function buildDirectories(){
+  const dirs = [
+    { id:"personnel", label:"Personnel Files", minClear:1 },
+    { id:"missions", label:"Mission Archives", minClear:1 },
+    { id:"attachments", label:"Mission Attachments", minClear:2 },
+    { id:"incident", label:"Incident Reports", minClear:2 },
+    { id:"psych", label:"Psychological Evaluations", minClear:2 },
+    { id:"medical", label:"Medical Reports", minClear:2 },
+    { id:"legal", label:"Legal & Compliance", minClear:1 },
+    { id:"index", label:"Indices & Registers", minClear:1 },
+  ];
+
+  dirs.push({ id:"command", label:"Command-Restricted", minClear:4 });
+  dirs.push({ id:"recovered", label:"Recovered Fragments", minClear:2, requiresAshOverride:true });
+
+  return dirs;
+}
+
+/* =========================
+   FILES (WORLD + DOSSIERS + MISSIONS)
+========================= */
+const FILES = [
+
+/* LEGAL */
+{
+  id:"LEGAL-NDA-0007 — CONTROLLED TRANSPARENCY AGREEMENT",
+  category:"legal",
+  clearance:1,
+  short:"ASTF NDA + disclosure boundaries (signed at induction)",
+  tags:["nda","legal","compliance","agreement","induction"],
+  content:
+`ANTI-SECRECY TASKFORCE (ASTF)
+CONTROLLED TRANSPARENCY AGREEMENT / NON-DISCLOSURE (NDA)
+Document ID: LEGAL-NDA-0007
+Version: 3.1
+Applies To: All personnel (contracted, embedded, or deputized)
+
+------------------------------------------------------------
+1. PURPOSE
+------------------------------------------------------------
+This agreement establishes controlled transparency boundaries for ASTF operations.
+Personnel are authorized to reference publicly auditable summaries where provided.
+Personnel are prohibited from disclosing tactical, biometric, or compartmental details.
+
+------------------------------------------------------------
+2. DEFINITIONS
+------------------------------------------------------------
+"Public Audit Material":
+Civilian-readable summaries released under ASTF doctrine.
+
+"Restricted Material":
+Any information not explicitly designated for civilian audit, including:
+- Tactical plans, routes, entry points, breach sequences
+- Secure communications procedures
+- Identifiers of protected or monitored subjects
+- Anomaly classification beyond Level II
+- Injuries and medical details beyond summary-level reporting
+- Any "Compartment" or "Oversight Channel" references
+
+"Compartment":
+A restricted authority channel that may exist without disclosure of rationale.
+
+------------------------------------------------------------
+3. PERMITTED DISCLOSURE (CONTROLLED)
+------------------------------------------------------------
+Personnel may disclose:
+- Mission code + general outcome (when included in audit summary)
+- Non-sensitive operational context (time window and location may be generalized)
+- Approved language provided in civilian-facing documentation
+
+Personnel must not improvise disclosure language.
+
+------------------------------------------------------------
+4. PROHIBITED DISCLOSURE
+------------------------------------------------------------
+Personnel must not disclose:
+- Restricted Material (as defined above)
+- Internal disagreements, oversight tension, or inter-agency disputes
+- Any rationale for monitoring status or protective placement of subjects
+- Any recovered fragments or non-indexed file pointers
+
+------------------------------------------------------------
+5. HANDLING REQUIREMENTS
+------------------------------------------------------------
+- Restricted Material must remain within approved storage nodes.
+- Personal replication of Restricted Material is prohibited.
+- Client-side copies (local caches) must be treated as restricted.
+
+------------------------------------------------------------
+6. BREACH CONSEQUENCES
+------------------------------------------------------------
+Violation may result in:
+- Immediate suspension of access credentials
+- Removal from operational duty
+- Federal referral for prosecution under applicable statutes
+- Permanent restriction from ASTF participation
+
+------------------------------------------------------------
+7. ACKNOWLEDGEMENT
+------------------------------------------------------------
+By continued participation and access, personnel acknowledge:
+- Understanding of controlled transparency doctrine
+- Awareness that access is logged and audited
+- Agreement to comply with disclosure boundaries
+
+Signature Field (On File): █████████████
+Date (On File): █████████`
+},
+
+{
+  id:"LEGAL-ETHICS-0002 — ETHICAL DISCLOSURE PROTOCOL (SUMMARY)",
+  category:"legal",
+  clearance:1,
+  short:"Field disclosure language guidance (civilian audit alignment)",
+  tags:["ethics","disclosure","protocol","summary"],
+  content:
+`LEGAL-ETHICS-0002
+ETHICAL DISCLOSURE PROTOCOL — SUMMARY
+
+Key Rule:
+If a detail is not explicitly approved for civilian audit, do not disclose it.
+
+Approved Phrases:
+- "Operational details withheld under controlled transparency policy."
+- "Biometrics withheld to prevent civilian misuse."
+- "Compartmental rationale not available for field distribution."
+
+Forbidden Phrases:
+- "I can tell you off record."
+- "You didn't hear this from me."
+- Any reference to Oversight Channel markers.
+
+Reminder:
+Operational transparency does not equal operational vulnerability.`
+},
+
+/* INDEX / WORLD */
+{
+  id:"REG-0001 — ACTIVE FILE REGISTER",
+  category:"index",
+  clearance:1,
+  short:"Directory overview / active file counts / audit note",
+  tags:["register","index","active","overview"],
+  content:
+`REG-0001
+ACTIVE FILE REGISTER — ARCHIVE NODE
+
+Directories:
+- Personnel Files
+- Mission Archives
+- Mission Attachments
+- Incident Reports
+- Psychological Evaluations
+- Medical Reports
+- Legal & Compliance
+- Indices & Registers
+- Command-Restricted (conditional)
+- Recovered Fragments (conditional)
+
+Audit Notice:
+This node records access traces locally per session. External sync is disabled.
+
+Policy:
+Operational transparency does not equate to operational vulnerability.`
+},
+
+{
+  id:"ORG-FOUNDATION — TASKFORCE ORIGIN BRIEF",
+  category:"index",
+  clearance:2,
+  short:"Formation history / anti-secrecy doctrine summary",
+  tags:["foundation","origin","doctrine"],
+  content:
+`ORG-FOUNDATION
+ANTI-SECRECY TASKFORCE — ORIGIN SUMMARY
+
+Established: 2009 (Post-Containment Disclosure Crisis)
+
+Mandate:
+Expose, neutralize, and dismantle unauthorized classified research entities operating beyond public accountability.
+
+Doctrine:
+- Transparency under control.
+- Civilian audit permitted within operational boundaries.
+- Compartmentalization permitted only when exposure creates greater instability.
+
+Founding Principle:
+Secrecy breeds escalation. Exposure controls it.`
+},
+
+{
+  id:"DOCTRINE-TRANSPARENCY — CIVILIAN AUDIT PROTOCOL",
+  category:"index",
+  clearance:1,
+  short:"Policy governing public file visibility",
+  tags:["doctrine","audit","civilian"],
+  content:
+`DOCTRINE-TRANSPARENCY
+
+Core Statement:
+Operational transparency does not equate to operational vulnerability.
+
+Policy:
+- Civilian-readable summaries must exist for all active operations.
+- Tactical details may be redacted.
+- Biometric identifiers remain restricted.
+
+Rationale:
+Controlled exposure reduces internal corruption and federal shadow expansion.`
+},
+
+{
+  id:"INTERNAL-EVAL-ANNUAL — TASKFORCE PERFORMANCE SUMMARY",
+  category:"index",
+  clearance:3,
+  short:"Year-end review snapshot",
+  tags:["annual","review","performance"],
+  content:
+`INTERNAL-EVAL-ANNUAL
+
+Year: Current Fiscal
+
+Total Operations: 38
+Successful Containments: 31
+Compromised Engagements: 4
+Fatalities (Hostile): 79
+Fatalities (ASTF): 2
+
+Operational Stability:
+Moderate
+
+Oversight Satisfaction Index:
+Unstable`
+},
+
+{
+  id:"IDX-MISSIONS — OPERATION INDEX",
+  category:"index",
+  clearance:1,
+  short:"Mission codes / statuses / participating units",
+  tags:["missions","index","operation","codes"],
+  content:
+`IDX-MISSIONS
+OPERATION INDEX
+
+MISSION-0731 — COLD GLASS — Completed (Compromised)
+MISSION-0712 — QUIET FERRY — Completed
+MISSION-0688 — SILVER STATIC — Completed
+MISSION-0651 — DRY VAULT — Completed (Restricted Addendum)
+
+(Additional missions appended as they are cleared for internal distribution.)`
+},
+
+/* PERSONNEL (Ash dossier variants + extra worldbuilding) */
+{
+  id:"DOSSIER-ASHLYNN / CALLSIGN: MINK",
+  category:"personnel",
+  clearance:2,
+  short:"Subject dossier — new recruit / tech specialization",
+  tags:["ashlynn","mink","dossier","personnel","canada","colorado"],
+  variants:{
+    "*":
+`ANTI-SECRECY TASKFORCE (ASTF)
+SUBJECT DOSSIER — ACTIVE INTAKE
+File Access: CIVILIAN AUDIT ENABLED (Partial Redaction)
+
+------------------------------------------------------------
+I. IDENTIFICATION
+------------------------------------------------------------
+Callsign: Mink
+Date of Birth: 09/18/████ (REDACTED)
+Place of Birth: BC, Canada
+
+Height: 5'5" (165 cm)
+Weight: 120 lbs (54 kg)
+Dominant Hand: Ambidextrous
+Distinguishing Marks: Scar (left facial plane)
+
+Medical Flags:
+- Selective IgA Deficiency (Primary Immunodeficiency)
+  Notes: Elevated infection susceptibility; monitor during extended deployment cycles.
+
+------------------------------------------------------------
+II. BACKGROUND SUMMARY
+------------------------------------------------------------
+Subject raised in Canada; relocated to Colorado during early adolescence.
+Relocation categorized as voluntary civilian migration.
+No record of state-sponsored transfer.
+
+Environmental adjustment assessment indicates high adaptability to regional cultural and operational shifts.
+No significant integration delays recorded.
+
+------------------------------------------------------------
+III. OPERATIONAL FUNCTION
+------------------------------------------------------------
+Primary Function:
+- Technical Systems Exploitation
+- Digital infrastructure penetration & recovery
+- Signal routing analysis, forensic reconstruction, field device stabilization
+
+Secondary Function:
+- Firearms competency and controlled combat response
+- Close-support engagement under structured command
+
+Threat Assessment: Moderate
+Confirmed Engagement Count: 20+ (Verified)
+Projected Utility Index: Moderate–High (Pending Field Validation)
+
+------------------------------------------------------------
+IV. BEHAVIORAL PROFILE (FORMAL EVALUATION)
+------------------------------------------------------------
+Subject presents as controlled, observant, and compliance-oriented.
+
+Notable traits:
+- High tolerance for structured hierarchy
+- Measured verbal responses
+- Delayed emotional signaling under pressure
+
+Risk factors:
+- Internalization tendency under prolonged stress
+Recommendation:
+- Continued observation during first three field rotations.
+
+------------------------------------------------------------
+V. PERFORMANCE RATINGS
+------------------------------------------------------------
+Tactical Awareness: B
+Physical Endurance: B-
+Firearms Proficiency: A-
+Analytical Processing: A+
+Operational Discretion: C+
+Team Integration: B+
+
+------------------------------------------------------------
+VI. TRAINING STATUS
+------------------------------------------------------------
+Induction Orientation: Complete
+Transparency Doctrine Seminar: Complete
+Ethical Disclosure Protocol: Certified
+Live Simulation Cycle I: Passed
+Field Shadow Assignment: Scheduled
+
+------------------------------------------------------------
+VII. DISCLOSURE STATEMENT
+------------------------------------------------------------
+In accordance with ASTF doctrine, this file is available for civilian audit.
+Sensitive biometric identifiers remain partially withheld to prevent misuse.
+
+Operational transparency does not equate to operational vulnerability.`,
+    "FIELD_COMMAND":
+`ANTI-SECRECY TASKFORCE (ASTF)
+SUBJECT DOSSIER — ACTIVE INTAKE
+FILE VIEW: COMMAND ACCESS
+Civilian Audit: Enabled (Partial Redaction)
+
+------------------------------------------------------------
+I. IDENTIFICATION
+------------------------------------------------------------
+Callsign: Mink
+DOB: 09/18/████ (REDACTED)
+Origin: BC, Canada → Colorado (Voluntary civilian migration)
+
+Medical Flags:
+- Selective IgA Deficiency
+  Field Note: Avoid prolonged exposure cycles without recovery window.
+
+------------------------------------------------------------
+III. OPERATIONAL FUNCTION (FIELD-RELEVANT)
+------------------------------------------------------------
+Primary Function:
+- Technical exploitation (rapid access, lock bypass support, recovery)
+- Forensic reconstruction (post-event trace, evidence hardening)
+
+Secondary Function:
+- Firearms support under direct supervision
+
+Threat Assessment: Moderate (20+ verified)
+Projected Utility Index: Moderate–High
+
+------------------------------------------------------------
+IV. BEHAVIORAL PROFILE (COMMAND NOTE)
+------------------------------------------------------------
+Compliance-oriented; stable in structured environments.
+
+Risk Factor:
+- Command dependency pattern observed.
+  Maintain clear tasking; concise confirmation loops.
+
+Additional Note:
+- Delayed stress response may occur (post-event crash).
+  Post-event check-in advised within 2–6 hours.`,
+    "OVERSIGHT":
+`ANTI-SECRECY TASKFORCE (ASTF)
+SUBJECT DOSSIER — OVERSIGHT ACCESS
+Civilian Audit: Enabled (Partial Redaction)
+
+------------------------------------------------------------
+OVERSIGHT STATUS (RESTRICTED ANNOTATION)
+------------------------------------------------------------
+Subject is currently under protection and monitored status.
+Reasoning is compartmentalized under separate authority channel.
+Do not disclose rationale in standard briefings.
+
+Directive:
+- Maintain placement within supervised team structure.
+- Continue passive monitoring; no escalation unless trigger criteria met.`
+  }
+},
+
+{
+  id:"DOSSIER-TOMCAT — COMMAND PROFILE",
+  category:"personnel",
+  clearance:4,
+  short:"Command profile / engagement conduct",
+  tags:["tomcat","lt","command","profile"],
+  content:
+`ANTI-SECRECY TASKFORCE (ASTF)
+COMMAND DOSSIER — RESTRICTED
+
+Subject: Lt. Tomcat
+Clearance: IV (Command)
+
+Operational Notes:
+- High mission adherence under pressure.
+- Assumes risk to maintain extraction integrity.
+- Consistent command discipline.
+
+Restrictions:
+- This dossier is not available for civilian audit.`
+},
+
+{
+  id:"DOSSIER-JOHNNY — SERVICE RECORD (LIMITED)",
+  category:"personnel",
+  clearance:1,
+  short:"Service record / detainee event flag",
+  tags:["johnny","private","service","record"],
+  content:
+`ANTI-SECRECY TASKFORCE (ASTF)
+SERVICE RECORD — LIMITED DISTRIBUTION
+
+Subject: Johnny
+Role: Private
+
+Status:
+Active, conditional.
+
+Notations:
+- Detainment event flagged (see PSY-EVAL-0731-J).
+- Reassignment pending periodic review.
+
+Civilian Audit:
+Redacted; summary only.`
+},
+
+{
+  id:"DOSSIER-BD — MEDICAL OPERATIONS PROFILE",
+  category:"personnel",
+  clearance:2,
+  short:"Combat medic capabilities / triage reliability",
+  tags:["bd","medic","triage","dossier"],
+  content:
+`ANTI-SECRECY TASKFORCE (ASTF)
+SUBJECT DOSSIER — MEDICAL OPERATIONS PROFILE
+
+Subject: BD
+Specialty: Combat Medic (Field)
+
+Operational Notes:
+- Rapid triage prioritization.
+- Maintains sterile discipline under stress.
+- Reliable team integration within supervised structure.
+
+Civilian Audit:
+Allowed with partial redaction.`
+},
+
+/* MISSIONS */
+{
+  id:"MISSION-0731 — OPERATION: COLD GLASS",
+  category:"missions",
+  clearance:2,
+  short:"Facility raid / containment breach / extraction compromised",
+  tags:["mission","0731","cold glass","lab","raid"],
+  content:
+`MISSION-0731
+Operation: Cold Glass
+Status: Completed (Compromised)
+
+Participating Personnel:
+- Lt. Tomcat
+- Operative Ash (Tech Level II)
+- Private Johnny
+
+Objective:
+Raid unauthorized research facility conducting anomaly containment experimentation.
+
+Summary:
+Hostile resistance encountered. ~20 confirmed fatalities.
+Containment breach triggered during vault access.
+Multiple anomalies released during structural failure.
+
+Personnel Notes:
+- Tomcat sustained multiple injuries during breach phase.
+- Ash sustained no physical injury; acute stress response recorded.
+- Johnny detained during retreat and later extracted.`
+},
+
+{
+  id:"MISSION-0712 — OPERATION: QUIET FERRY",
+  category:"missions",
+  clearance:1,
+  short:"Harbor data interception / no casualties",
+  tags:["mission","0712","harbor","intercept"],
+  content:
+`MISSION-0712
+Operation: Quiet Ferry
+Status: Completed
+
+Objective:
+Intercept encrypted cargo manifests tied to anomaly trafficking.
+
+Outcome:
+No fatalities.
+Data secured.
+No breach escalation.`
+},
+
+{
+  id:"MISSION-0688 — OPERATION: SILVER STATIC",
+  category:"missions",
+  clearance:2,
+  short:"Signal tower disruption / urban sweep",
+  tags:["mission","0688","signal","tower"],
+  content:
+`MISSION-0688
+Operation: Silver Static
+Status: Completed
+
+Objective:
+Disable unauthorized broadcast tower transmitting anomaly-linked frequencies.
+
+Outcome:
+Signal neutralized.
+Two hostiles detained.
+Minimal structural damage.`
+},
+
+{
+  id:"MISSION-0651 — OPERATION: DRY VAULT",
+  category:"missions",
+  clearance:3,
+  short:"Financial archive seizure / classified addendum exists",
+  tags:["mission","0651","vault","financial"],
+  content:
+`MISSION-0651
+Operation: Dry Vault
+Status: Completed
+
+Objective:
+Secure financial ledgers tied to compartmental research funding.
+
+Outcome:
+Documents secured.
+Subject identities redacted.
+Further review ongoing.`
+},
+
+/* ATTACHMENTS */
+{
+  id:"ANOM-PRIMER — ANOMALY CLASSIFICATION GUIDE",
+  category:"attachments",
+  clearance:2,
+  short:"Internal classification system overview",
+  tags:["anomaly","classification","guide"],
+  content:
+`ANOM-PRIMER
+
+Classification Levels:
+Level I — Environmental distortions.
+Level II — Biological alterations.
+Level III — Cognitive disruption entities.
+Level IV — Autonomous containment-resistant anomalies.
+
+Note:
+No confirmed Level V entity has been successfully contained.
+
+Disclosure Risk:
+Public exposure probability increases exponentially beyond Level III.`
+},
+
+{
+  id:"EQUIP-LOG-ROSTER — ACTIVE FIELD EQUIPMENT",
+  category:"attachments",
+  clearance:1,
+  short:"Standard issue loadout summary",
+  tags:["equipment","loadout","roster"],
+  content:
+`EQUIP-LOG-ROSTER
+
+Standard Field Kit:
+- Compact ballistic vest (reinforced spine panel)
+- Barrier support module
+- Portable signal jammer (Level II compliant)
+- Trauma pack (field medic variation)
+
+Note:
+Equipment failure rates increased 3.7% over last fiscal cycle.`
+},
+
+{
+  id:"ATTACH-0731-A — ENTRY PLAN (REDACTED)",
+  category:"attachments",
+  clearance:2,
+  short:"Ingress / comm windows / breach sequence (text export)",
+  tags:["attach","0731","entry","plan","ingress"],
+  content:
+`ATTACH-0731-A
+ENTRY PLAN (TEXT EXPORT)
+
+Ingress Window:
+- 02:10–02:14 local
+
+Breach Sequence:
+1) External lock bypass (Ash)
+2) Corridor sweep (Tomcat / Johnny)
+3) Primary door forced entry
+4) Vault approach contingent on resistance level
+
+Notes:
+Certain facility schematics withheld under compartment rules.`
+},
+
+{
+  id:"ATTACH-0731-C — ANOMALY RELEASE LIST (INCOMPLETE)",
+  category:"attachments",
+  clearance:3,
+  short:"Partial list of released entities / identifiers obscured",
+  tags:["anomaly","release","list","incomplete"],
+  content:
+`ATTACH-0731-C
+ANOMALY RELEASE LIST (INCOMPLETE)
+Clearance: III
+
+Released Items:
+- ███-██ (designation withheld)
+- ███-██ (designation withheld)
+- UNKNOWN (unregistered)
+
+Containment Status:
+Unconfirmed. Active recovery efforts ongoing.
+
+Notice:
+This list is incomplete and subject to revision.`
+},
+
+/* INCIDENTS */
+{
+  id:"INCIDENT-0731-B — DETAINMENT / INTERROGATION (JOHNNY)",
+  category:"incident",
+  clearance:4,
+  short:"Command-only incident log",
+  tags:["incident","interrogation","detainment","johnny","0731"],
+  content:
+`INCIDENT-0731-B
+Clearance Level IV
+
+Subject: Johnny
+Event: Detainment during Operation Cold Glass
+Status: Extracted
+
+Details:
+Subject detained ~17 hours.
+Evidence of prolonged interrogation and physical torture.
+No confirmed cognitive extraction breach detected.
+
+Recommendation:
+Immediate psychological evaluation.
+Temporary removal from active operations pending assessment outcome.`
+},
+
+{
+  id:"INCIDENT-0731-D — INJURY CAUSATION NOTE (TOMCAT)",
+  category:"incident",
+  clearance:3,
+  short:"Close-quarters strike + lower-back stab attribution",
+  tags:["injury","tomcat","breach","0731"],
+  content:
+`INCIDENT-0731-D
+Clearance Level III
+Visibility: Restricted
+
+Subject: Lt. Tomcat
+Event: Breach phase — corridor compression
+
+Preliminary Attribution:
+- Cranial injury consistent with single overhead blunt strike during close-quarters engagement.
+- Lower back wound consistent with opportunistic stab during low-visibility movement compression.
+
+Conclusion:
+Injuries sustained during active protection maneuver of trailing personnel.`
+},
+
+/* PSYCH */
+{
+  id:"PSY-EVAL-0731-J — POST-DETENTION ASSESSMENT (JOHNNY)",
+  category:"psych",
+  clearance:2,
+  short:"Post-event psychological assessment",
+  tags:["psych","eval","johnny","detention","0731"],
+  content:
+`PSY-EVAL-0731-J
+
+Subject: Johnny
+Evaluator: ASTF Psychological Oversight
+
+Presenting Observations:
+- Hypervigilance
+- Sleep disruption
+- Dissociative response patterns
+- Trigger sensitivity to confinement cues
+
+Assessment:
+Moderate instability under confinement conditions.
+Subject demonstrates high functional output when engaged in structured tasking.
+
+Deployment Status:
+Conditional clearance granted.
+Restrictions: Avoid solo containment assignments pending re-evaluation.`
+},
+
+{
+  id:"PSY-OBS-0731-A — ACUTE STRESS NOTE (ASH)",
+  category:"psych",
+  clearance:2,
+  short:"Witnessed command injury / delayed stress response risk",
+  tags:["psych","ash","stress","0731"],
+  content:
+`PSY-OBS-0731-A
+
+Subject: Ash (Callsign: Mink)
+Event: Operation Cold Glass
+
+Notes:
+No physical injury.
+Observed commanding officer sustain injury during breach.
+Acute stress response recorded during debrief (elevated tremor, shallow breathing, delayed affect).
+
+Status:
+Cleared for continued service.
+Recommendation:
+Short-form decompression check within 24 hours post high-casualty events.`
+},
+
+/* MEDICAL (UPDATED INJURIES) */
+{
+  id:"MED-0731-T — INJURY SUMMARY (TOMCAT)",
+  category:"medical",
+  clearance:2,
+  short:"Field injury log / recovery estimate",
+  tags:["medical","tomcat","injury","0731"],
+  content:
+`MED-0731-T
+
+Subject: Lt. Tomcat
+Event: Operation Cold Glass
+
+Injuries:
+- Blunt force trauma to cranial region (single impact; close-quarters strike)
+- Concussion (Grade I)
+- Penetrating wound: lower back (single entry; no exit)
+- Two fractured ribs
+- Deep shoulder laceration (sutured)
+- Soft tissue bruising (multiple sites)
+
+Field Treatment:
+- Immediate hemostasis applied to lower back wound
+- Wound irrigated and pressure-dressed
+- Neurological check performed (no spinal compromise detected)
+- Concussion protocol initiated
+
+Recovery Estimate:
+14–21 days
+Notes:
+Subject refused temporary removal from operations (command override initiated).`
+},
+
+/* COMMAND / WORLD TENSION */
+{
+  id:"MEMO-OVERSIGHT-112 — FEDERAL TENSION NOTICE",
+  category:"command",
+  clearance:4,
+  short:"Inter-agency friction advisory",
+  tags:["memo","oversight","federal","tension"],
+  content:
+`MEMO-OVERSIGHT-112
+
+Notice:
+Federal oversight divisions have expressed concern regarding ASTF partial disclosures.
+
+Observation:
+Certain oversight entities advocate for full reclassification of anomaly-related engagements.
+
+Directive:
+Continue controlled transparency.
+Do not engage in public escalation without clearance from Oversight Channel V.
+
+Note:
+Internal divisions are increasing.`
+},
+
+{
+  id:"CMD-0731 — AFTER-ACTION DIRECTIVE (FIELD COMMAND)",
+  category:"command",
+  clearance:4,
+  short:"Post-event directive / training adjustments / containment caution",
+  tags:["command","directive","after action","0731"],
+  content:
+`CMD-0731
+AFTER-ACTION DIRECTIVE — COMMAND CHANNEL
+
+Directive Summary:
+- Reduce solo corridor pushes during unknown facility sweeps.
+- Maintain extraction fallback route at all times.
+- Tech operator remains behind primary cover until breach integrity is confirmed.
+
+Training Adjustment:
+- Conduct two additional live cycles focused on containment breach response.
+- Re-evaluate barrier support kit usage.
+
+Medical Constraint:
+- Concussion monitoring mandatory for 72 hours post-event.
+- No sprint-load extraction drills until lower back wound is cleared for full flexion.
+
+Note:
+No discussion of oversight compartments in field briefings.`
+},
+
+{
+  id:"FLAG-OVR-ASH — MONITORING STATUS",
+  category:"command",
+  clearance:4,
+  short:"Oversight marker only",
+  tags:["ash","monitoring","flag"],
+  content:
+`FLAG-OVR-ASH
+
+Status: Passive Monitoring
+Escalation Trigger: Undefined
+Exposure Risk: Low
+
+Note:
+Do not disclose monitoring rationale to field command unless criteria are met.`
+},
+
+/* RECOVERED (ASH OVERRIDE) */
+{
+  id:"FRAGMENT-ASH-01 — DIRECTORY LEAK (PARTIAL)",
+  category:"recovered",
+  clearance:2,
+  short:"Local cache residue / unlogged access trace",
+  tags:["fragment","recovered","leak","ash"],
+  hiddenForAshOverride:true,
+  content:
+`FRAGMENT-ASH-01
+Source: Local cache / index residue
+Recovery Method: Unlogged access (client-side)
+
+Extract:
+- Subject protection status referenced in oversight channel.
+- Trigger criteria mentioned (details withheld).
+- Secondary file pointer: ██████-████ (unresolved)
+
+NOTE:
+Fragment is incomplete and may be intentionally corrupted.`
+},
+
+{
+  id:"FRAGMENT-ASH-02 — OVERSIGHT TAG (UNVERIFIED)",
+  category:"recovered",
+  clearance:3,
+  short:"Short tag / classification marker / missing payload",
+  tags:["fragment","oversight","tag","unverified"],
+  hiddenForAshOverride:true,
+  content:
+`FRAGMENT-ASH-02
+Classification Marker: OVR-█
+Payload: NOT PRESENT
+
+Interpretation:
+A marker exists without attached content.
+This may indicate a decoy record or an intentionally empty pointer.`
+},
+];
+
+/* =========================
+   UTILS
+========================= */
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function nowStamp(){
+  const d = new Date();
+  const pad = (n)=> String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+function makeSessionTag(){
+  const a = Math.random().toString(16).slice(2,6).toUpperCase();
+  const b = Math.random().toString(16).slice(2,6).toUpperCase();
+  return `ASTF-${a}-${b}`;
+}
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(()=> t.classList.remove("show"), 2600);
+}
+
+/* Local audit (per device) */
+function auditKey(){ return `ASTF_AUDIT_${currentUser || "none"}`; }
+function auditLog(action, target){
+  if(!currentUser) return;
+  const entry = { ts: nowStamp(), action, target: target || "" };
+  const key = auditKey();
+  const prev = JSON.parse(localStorage.getItem(key) || "[]");
+  prev.unshift(entry);
+  localStorage.setItem(key, JSON.stringify(prev.slice(0, 120)));
+  trace.textContent = `${action}${target ? " / " + target : ""}`;
+}
+
+/* =========================
+   ACCESS CONTROL
+========================= */
+function clearance(){ return USERS[currentUser].clearance; }
+function hasClearance(file){ return clearance() >= (file.clearance || 1); }
+function isDirAllowed(dir){
+  if(clearance() < dir.minClear) return false;
+  if(dir.requiresAshOverride && !ashOverrideUnlocked) return false;
+  return true;
+}
+function canSeeFile(file){
+  if(!hasClearance(file)) return false;
+  if(file.hiddenForAshOverride && !ashOverrideUnlocked) return false;
+  return true;
+}
+
+/* Variant selection + Ash override dossier addendum */
+function contentFor(file){
+  let base = "";
+  const role = USERS[currentUser].role;
+  const isCommand = role.includes("CLEARANCE IV");
+  const isOversight = role.includes("CLEARANCE V");
+
+  if(file.variants){
+    if(isOversight && file.variants.OVERSIGHT) base = file.variants.OVERSIGHT;
+    else if(isCommand && file.variants.FIELD_COMMAND) base = file.variants.FIELD_COMMAND;
+    else base = file.variants["*"] || "";
+  } else {
+    base = file.content || "";
+  }
+
+  // Ash override insert (in-universe) — only if user typed the code
+  if(ashOverrideUnlocked && file.id.startsWith("DOSSIER-ASHLYNN")){
+    base += `
+
+------------------------------------------------------------
+LOCAL INSERT (UNLOGGED) — MINK OVERRIDE
+------------------------------------------------------------
+Access note:
+Some directory markers are present without payload. This archive node contains deliberate void pointers.
+
+Personal note:
+If a record is missing, it may not be absent. It may be stored elsewhere under a different key.
+`;
+  }
+  return base;
+}
+
+/* =========================
+   UI HOOKS
+========================= */
+const loginView = document.getElementById("loginView");
+const appView = document.getElementById("appView");
+const err = document.getElementById("err");
+const u = document.getElementById("u");
+const p = document.getElementById("p");
+const loginBtn = document.getElementById("loginBtn");
+
+const authLoad = document.getElementById("authLoad");
+const authLoadBar = document.getElementById("authLoadBar");
+
+const who = document.getElementById("who");
+const role = document.getElementById("role");
+const sess = document.getElementById("sess");
+const trace = document.getElementById("trace");
+
+const nav = document.getElementById("nav");
+const listTitle = document.getElementById("listTitle");
+const search = document.getElementById("search");
+const list = document.getElementById("list");
+
+const viewTitle = document.getElementById("viewTitle");
+const viewMeta = document.getElementById("viewMeta");
+const viewBody = document.getElementById("viewBody");
+
+const logoutBtn = document.getElementById("logoutBtn");
+const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+const showAuditBtn = document.getElementById("showAuditBtn");
+const copyBtn = document.getElementById("copyBtn");
+const redactBtn = document.getElementById("redactBtn");
+
+/* =========================
+   RENDER
+========================= */
+function renderNav(){
+  nav.innerHTML = "";
+  const dirs = buildDirectories().filter(isDirAllowed);
+
+  dirs.forEach(d => {
+    const el = document.createElement("div");
+    el.className = "navItem" + (currentCategory === d.id ? " active" : "");
+    el.innerHTML = `<span>${d.label}</span><span class="badge">CL-${d.minClear}</span>`;
+    el.addEventListener("click", () => loadCategory(d.id));
+    nav.appendChild(el);
+  });
+
+  document.getElementById("netPill").textContent = ashOverrideUnlocked ? "Node: LOCAL (OVERRIDE)" : "Node: LOCAL";
+}
+
+function renderList(){
+  const q = search.value.trim().toLowerCase();
+  const files = FILES
+    .filter(f => f.category === currentCategory)
+    .filter(canSeeFile)
+    .filter(f => {
+      if(!q) return true;
+      const blob = `${f.id} ${f.short||""} ${(f.tags||[]).join(" ")} ${contentFor(f)}`.toLowerCase();
+      return blob.includes(q);
+    });
+
+  list.innerHTML = "";
+  if(files.length === 0){
+    list.innerHTML = `<div class="empty">No accessible files in this directory.</div>`;
+    return;
+  }
+
+  files.forEach(f => {
+    const el = document.createElement("div");
+    el.className = "item" + (activeFileId === f.id ? " active" : "");
+    el.innerHTML = `
+      <div class="itemTop">
+        <div class="fname">${escapeHtml(f.id)}</div>
+        <div class="metaSmall">CL-${f.clearance || 1}</div>
+      </div>
+      <div class="desc">
+Clearance Required: ${f.clearance || 1}
+${f.short ? "Summary: " + escapeHtml(f.short) : ""}
+      </div>
+    `;
+    el.addEventListener("click", () => openFile(f));
+    list.appendChild(el);
+  });
+}
+
+function openFile(f){
+  activeFileId = f.id;
+  auditLog("OPEN", f.id);
+
+  viewTitle.textContent = f.id;
+
+  viewMeta.style.display = "grid";
+  viewMeta.innerHTML = `
+    <div>Directory: ${escapeHtml(currentCategory)}</div>
+    <div>Clearance Required: ${escapeHtml(String(f.clearance || 1))}</div>
+    <div>Timestamp: ${escapeHtml(nowStamp())}</div>
+  `;
+
+  const raw = contentFor(f);
+  let body = escapeHtml(raw);
+
+  if(redactOverlay){
+    body = body.replace(/█{3,}/g, "████████");
+  }
+
+  viewBody.innerHTML = body.replace(/\n/g, "<br>");
+  renderList();
+}
+
+function clearViewer(){
+  activeFileId = null;
+  viewTitle.textContent = "No file selected";
+  viewMeta.style.display = "none";
+  viewMeta.innerHTML = "";
+  viewBody.innerHTML = `<div class="empty">Select a directory, then select a file.</div>`;
+  auditLog("CLEAR", "VIEWER");
+  renderList();
+}
+
+function directoryLabel(cat){
+  const d = buildDirectories().find(x => x.id === cat);
+  return d ? d.label : cat;
+}
+
+function loadCategory(cat){
+  currentCategory = cat;
+  activeFileId = null;
+
+  listTitle.textContent = directoryLabel(cat);
+  search.value = "";
+  auditLog("DIR", cat);
+
+  renderNav();
+  renderList();
+  clearViewer();
+}
+
+function showAudit(){
+  const entries = JSON.parse(localStorage.getItem(auditKey()) || "[]");
+  const lines = [];
+  lines.push(`AUDIT LOG (LOCAL)\nSession: ${sess.textContent}\n`);
+  lines.push("------------------------------------------------------------");
+  if(entries.length === 0){
+    lines.push("No entries recorded.");
+  } else {
+    for(const e of entries){
+      lines.push(`${e.ts}  |  ${String(e.action).padEnd(6," ")}  |  ${e.target}`);
+    }
+  }
+
+  viewTitle.textContent = "AUDIT LOG";
+  viewMeta.style.display = "none";
+  viewMeta.innerHTML = "";
+  viewBody.textContent = lines.join("\n");
+  auditLog("OPEN", "AUDIT");
+}
+
+/* =========================
+   LOGIN WITH LOADER
+========================= */
+function doLoginCore(){
+  err.style.display = "none";
+  const username = u.value.trim();
+  const pass = p.value;
+
+  if(USERS[username] && USERS[username].pass === pass){
+    currentUser = username;
+
+    who.textContent = "AUTHORIZED USER";                 // <- no username shown
+    role.textContent = USERS[currentUser].role;          // <- role/clearance only (no identity)
+    sess.textContent = makeSessionTag();
+    trace.textContent = "AUTH / " + Math.random().toString(16).slice(2,10).toUpperCase();
+
+    currentCategory = null;
+    activeFileId = null;
+    redactOverlay = false;
+    keyBuffer = "";
+
+    // Ash override persists locally per device (only affects directories + inserts)
+    ashOverrideUnlocked = (localStorage.getItem("ASTF_ASH_OVERRIDE") === "1");
+
+    loginView.style.display = "none";
+    appView.style.display = "grid";
+
+    toast("ACCESS GRANTED");
+    auditLog("AUTH", sess.textContent);
+
+    renderNav();
+
+    // role-based landing (no identity assumptions)
+    if(clearance() >= 4) loadCategory("index");
+    else loadCategory("personnel");
+
+  } else {
+    err.style.display = "block";
+  }
+}
+
+function doLoginWithLoader(){
+  err.style.display = "none";
+
+  authLoad.style.display = "block";
+  authLoadBar.style.animation = "none";
+  void authLoadBar.offsetWidth;
+  authLoadBar.style.animation = "authProgress 520ms ease-out forwards";
+
+  loginBtn.disabled = true;
+  loginBtn.style.opacity = "0.75";
+  loginBtn.style.cursor = "not-allowed";
+
+  setTimeout(() => {
+    doLoginCore();
+
+    authLoad.style.display = "none";
+    loginBtn.disabled = false;
+    loginBtn.style.opacity = "1";
+    loginBtn.style.cursor = "pointer";
+  }, 520);
+}
+
+function doLogout(){
+  auditLog("LOGOUT", "");
+  currentUser = null;
+  currentCategory = null;
+  activeFileId = null;
+  redactOverlay = false;
+
+  appView.style.display = "none";
+  loginView.style.display = "grid";
+  u.value = "";
+  p.value = "";
+  err.style.display = "none";
+
+  document.getElementById("netPill").textContent = "Node: LOCAL";
+}
+
+/* =========================
+   ASH EASTER EGG (SAFE / IN-UNIVERSE)
+   Trigger: typing "mink" while logged in unlocks recovered fragments.
+   Note: this affects only this browser (localStorage).
+========================= */
+document.addEventListener("keydown", (e) => {
+  if(!currentUser) return;
+
+  const k = e.key.toLowerCase();
+  if(k.length !== 1) return;
+
+  keyBuffer = (keyBuffer + k).slice(-10);
+
+  if(!ashOverrideUnlocked && keyBuffer.includes("mink")){
+    ashOverrideUnlocked = true;
+    localStorage.setItem("ASTF_ASH_OVERRIDE", "1");
+    toast("LOCAL OVERRIDE ACCEPTED (MINK)");
+    auditLog("OVR", "MINK");
+    renderNav();
+    if(currentCategory === "recovered") renderList();
+  }
+});
+
+/* =========================
+   BUTTONS / WIRING
+========================= */
+loginBtn.addEventListener("click", doLoginWithLoader);
+p.addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLoginWithLoader(); });
+
+logoutBtn.addEventListener("click", doLogout);
+
+clearSelectionBtn.addEventListener("click", clearViewer);
+showAuditBtn.addEventListener("click", showAudit);
+
+search.addEventListener("input", renderList);
+
+copyBtn.addEventListener("click", async () => {
+  const txt = viewBody.innerText || "";
+  try{
+    await navigator.clipboard.writeText(txt);
+    toast("COPIED TO CLIPBOARD");
+    auditLog("COPY", activeFileId || "VIEW");
+  }catch{
+    toast("COPY FAILED");
+  }
+});
+
+redactBtn.addEventListener("click", () => {
+  redactOverlay = !redactOverlay;
+  toast(redactOverlay ? "REDACTION OVERLAY: ON" : "REDACTION OVERLAY: OFF");
+  if(activeFileId){
+    const f = FILES.find(x => x.id === activeFileId);
+    if(f) openFile(f);
+  }
+});
+
+/* INITIAL */
+(function init(){
+  viewTitle.textContent = "No file selected";
+})();
+</script>
+</body>
+</html>

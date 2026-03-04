@@ -8,10 +8,6 @@
 <style>
   :root{
     --bg:#070a0e;
-    --panel:#0b1118;
-    --panel2:#0a0f14;
-    --border:#1a2633;
-    --border2:#223243;
     --text:#9cc4ff;
     --muted:#7f97b2;
     --dim:#5f7284;
@@ -51,7 +47,7 @@
     white-space:nowrap;
   }
 
-  .wrap{ height: calc(100% - 44px); display:grid; place-items:center; padding: 18px 14px 26px; }
+  .wrap{ height: calc(100% - 44px); display:grid; place-items:center; padding: 18px 14px 26px; overflow:auto; }
   .card{
     width:min(1280px, 100%);
     height:min(820px, calc(100vh - 90px));
@@ -123,7 +119,7 @@
   }
 
   /* App layout */
-  .app{ height:100%; display:none; grid-template-rows: 1fr; }
+  .app{ height:100%; display:none; }
   .grid{ height:100%; display:grid; grid-template-columns: 280px 420px 1fr; }
 
   /* Left sidebar */
@@ -132,6 +128,7 @@
     background: rgba(10,15,20,.35);
     padding: 12px;
     display:flex; flex-direction:column; gap:12px;
+    min-width:0;
   }
   .identity{
     border:1px solid rgba(34,50,67,.65);
@@ -157,7 +154,7 @@
     margin: 2px 2px 0;
   }
 
-  .nav{ display:flex; flex-direction:column; gap:8px; overflow:auto; padding-right:4px; }
+  .nav{ display:flex; flex-direction:column; gap:8px; padding-right:4px; min-width:0; }
   .navItem{
     padding: 10px 10px;
     border-radius: 14px;
@@ -218,11 +215,7 @@
     border-color: rgba(156,196,255,.65);
     box-shadow: 0 0 0 3px rgba(156,196,255,.09);
   }
-  .list{
-    overflow:auto;
-    padding: 8px;
-    min-width: 0;
-  }
+  .list{ padding: 8px; min-width: 0; }
   .item{
     border:1px solid rgba(34,50,67,.50);
     background: rgba(10,15,20,.35);
@@ -257,11 +250,7 @@
     justify-content:space-between;
     gap:10px;
   }
-  .viewTitle{
-    font-size:13px;
-    font-weight:800;
-    letter-spacing: .8px;
-  }
+  .viewTitle{ font-size:13px; font-weight:800; letter-spacing: .8px; }
   .viewMeta{
     margin-top:8px;
     display:grid;
@@ -272,7 +261,6 @@
   }
   .viewBody{
     padding: 14px 16px 18px;
-    overflow:auto;
     white-space: pre-wrap;
     font-size:12px;
     line-height:1.7;
@@ -310,35 +298,9 @@
     transition: opacity .18s ease, transform .18s ease;
     pointer-events:none;
   }
-  .toast.show{
-    opacity:1;
-    transform: translateY(0);
-  }
+  .toast.show{ opacity:1; transform: translateY(0); }
 
-  /* =========================================================
-     HARD SCROLL FIX (viewer + list + directories)
-     (grid/flex min-height:0 makes overflow scroll actually work)
-     ========================================================= */
-  .card { min-height: 0; }
-  .app, .grid, .left, .mid, .right { min-height: 0; }
-
-  .nav{ min-height:0; overflow-y:auto; overflow-x:hidden; }
-  .list{ min-height:0; overflow-y:auto; overflow-x:hidden; }
-
-  .right{ min-height:0; }
-  .viewBody{
-    flex: 1 1 auto;
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    height: auto;
-  }
-
-  /* Allow page to scroll if viewport is tiny */
-  .app{ overflow:hidden; }
-  .wrap{ overflow:auto; }
-
-  /* (Optional) visible system scrollbars */
+  /* Visible scrollbars */
   * { scrollbar-width: thin; scrollbar-color: rgba(156,196,255,.25) rgba(10,15,20,.35); }
   *::-webkit-scrollbar{ width:10px; height:10px; }
   *::-webkit-scrollbar-track{ background: rgba(10,15,20,.35); }
@@ -348,7 +310,117 @@
     border-radius: 999px;
   }
   *::-webkit-scrollbar-thumb:hover{ background: rgba(156,196,255,.28); }
-  .list, .viewBody, .nav { overscroll-behavior: contain; }
+
+  /* =========================
+     FORCE SCROLL (hard, reliable)
+     ========================= */
+  .card { height: min(820px, calc(100vh - 90px)); }
+  .app, .grid { height: 100%; }
+  .left, .mid, .right { height: 100%; }
+
+  .left { overflow: hidden; }
+  #nav { overflow-y: auto; overflow-x:hidden; height: calc(100% - 250px); }
+
+  .mid { overflow: hidden; }
+  #list { overflow-y: auto; overflow-x:hidden; height: calc(100% - 56px); }
+
+  .right { overflow: hidden; }
+  #viewBody { overflow-y: auto; overflow-x:hidden; height: calc(100% - 86px); }
+
+  /* =========================
+     KIYOMI EASTER EGG OVERLAY
+     ========================= */
+  #kiyomiOverlay{
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  #kiyomiOverlay.show{ display: flex; }
+
+  #cheshireSmile{
+    width: min(520px, 80vw);
+    height: min(260px, 40vh);
+    position: relative;
+    filter: drop-shadow(0 0 14px rgba(156,196,255,.22));
+    animation: kiyomiFloat 2.8s ease-in-out infinite;
+  }
+  @keyframes kiyomiFloat{
+    0%,100%{ transform: translateY(0px); opacity: .92; }
+    50%{ transform: translateY(-10px); opacity: 1; }
+  }
+
+  /* Eyes */
+  #cheshireSmile::before,
+  #cheshireSmile::after{
+    content:"";
+    position:absolute;
+    top: 28%;
+    width: 46px;
+    height: 18px;
+    border: 2px solid rgba(156,196,255,.72);
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0 0 999px 999px;
+    opacity: .9;
+  }
+  #cheshireSmile::before{ left: 30%; transform: rotate(-6deg); }
+  #cheshireSmile::after{ right: 30%; transform: rotate(6deg); }
+
+  /* Smile */
+  #cheshireSmile .smile{
+    position:absolute;
+    left: 50%;
+    top: 52%;
+    transform: translateX(-50%);
+    width: 82%;
+    height: 42%;
+    border: 2px solid rgba(156,196,255,.72);
+    border-top: 0;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0 0 999px 999px;
+    opacity: .95;
+  }
+
+  /* Teeth ticks (subtle) */
+  #cheshireSmile .teeth{
+    position:absolute;
+    left: 50%;
+    top: 68%;
+    transform: translateX(-50%);
+    width: 74%;
+    height: 18%;
+    opacity: .45;
+    display:flex;
+    gap: 10px;
+    align-items:flex-end;
+    justify-content:center;
+  }
+  #cheshireSmile .teeth span{
+    display:block;
+    width: 1px;
+    height: 22px;
+    background: rgba(156,196,255,.65);
+  }
+
+  #cheshireHint{
+    position: fixed;
+    bottom: 18px;
+    left: 18px;
+    color: rgba(156,196,255,.55);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display:none;
+    z-index: 1000000;
+  }
+  #kiyomiOverlay.show + #cheshireHint{ display:block; }
+
 </style>
 </head>
 
@@ -455,8 +527,20 @@
 
   <div class="toast" id="toast"></div>
 
+  <!-- KIYOMI OVERLAY -->
+  <div id="kiyomiOverlay" aria-hidden="true">
+    <div id="cheshireSmile">
+      <div class="smile"></div>
+      <div class="teeth" aria-hidden="true">
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span><span></span>
+        <span></span>
+      </div>
+    </div>
+  </div>
+  <div id="cheshireHint">Press ESC to return</div>
+
 <script>
-/* Replace usernames here with your private ones if you want */
 const USERS = {
   "astf.secure.usercmd.tomcat.fieldlead.04": { pass:"ELSAILGRA", role:"FIELD COMMAND — CLEARANCE IV", clearance:4 },
   "astf.secure.userops.mink.technician.level2.17": { pass:"9dZzUPUK]kr*c2E3]r+shEd7", role:"TECH OPERATIONS — CLEARANCE II", clearance:2 },
@@ -474,35 +558,40 @@ let currentCategory = null;
 let activeFileId = null;
 let redactOverlay = false;
 
-let ashOverrideUnlocked = false;
+/* Mink easter eggs */
+let ashOverrideUnlocked = false;      // typing "mink"
+let minkTomcatUnlocked = false;       // typing "tomcat" etc after mink
+let minkTomcatDeep = false;           // typing "minkheart" etc after tomcat unlock
 let keyBuffer = "";
 
 /* =========================
    DIRECTORIES
 ========================= */
 function buildDirectories(){
-  const dirs = [
+  return [
     { id:"personnel", label:"Personnel Files", minClear:1 },
     { id:"missions", label:"Mission Archives", minClear:1 },
     { id:"attachments", label:"Mission Attachments", minClear:2 },
     { id:"incident", label:"Incident Reports", minClear:2 },
     { id:"psych", label:"Psychological Evaluations", minClear:2 },
     { id:"medical", label:"Medical Reports", minClear:2 },
+    { id:"training", label:"Training & Doctrine", minClear:1 },
+    { id:"correspondence", label:"Correspondence Logs", minClear:1 },
     { id:"legal", label:"Legal & Compliance", minClear:1 },
     { id:"index", label:"Indices & Registers", minClear:1 },
     { id:"command", label:"Command-Restricted", minClear:4 },
     { id:"recovered", label:"Recovered Fragments", minClear:2, requiresAshOverride:true },
+    { id:"mink_cache", label:"Local Cache (Unindexed)", minClear:2, requiresMinkTomcat:true }
   ];
-  return dirs;
 }
 
 /* =========================
-   FILES (shortened here — keep your existing FILES array)
-   IMPORTANT: paste your FILES array right below.
+   FILES (WORLD + DOSSIERS + MISSIONS + MORE)
 ========================= */
 const FILES = [
-  /* Keep your full FILES array from the previous version here.
-     (No changes required for scroll; the CSS fix above handles it.) */
+  /* (snipped in this message for brevity)
+     Keep the exact FILES array from your previous version here.
+     Nothing else about the files needs to change for Kiyomi to work. */
 ];
 
 /* =========================
@@ -532,6 +621,21 @@ function toast(msg){
   t.classList.add("show");
   setTimeout(()=> t.classList.remove("show"), 2600);
 }
+
+/* Kiyomi overlay controls */
+function showKiyomi(){
+  const ov = document.getElementById("kiyomiOverlay");
+  if(!ov) return;
+  ov.classList.add("show");
+  auditLog("OVR", "KIYOMI");
+}
+function hideKiyomi(){
+  const ov = document.getElementById("kiyomiOverlay");
+  if(!ov) return;
+  ov.classList.remove("show");
+}
+
+/* Local audit (per device) */
 function auditKey(){ return `ASTF_AUDIT_${currentUser || "none"}`; }
 function auditLog(action, target){
   if(!currentUser) return;
@@ -539,7 +643,7 @@ function auditLog(action, target){
   const key = auditKey();
   const prev = JSON.parse(localStorage.getItem(key) || "[]");
   prev.unshift(entry);
-  localStorage.setItem(key, JSON.stringify(prev.slice(0, 120)));
+  localStorage.setItem(key, JSON.stringify(prev.slice(0, 160)));
   trace.textContent = `${action}${target ? " / " + target : ""}`;
 }
 
@@ -547,19 +651,64 @@ function auditLog(action, target){
    ACCESS CONTROL
 ========================= */
 function clearance(){ return USERS[currentUser].clearance; }
-function hasClearance(file){ return clearance() >= (file.clearance || 1); }
+
 function isDirAllowed(dir){
   if(clearance() < dir.minClear) return false;
   if(dir.requiresAshOverride && !ashOverrideUnlocked) return false;
+  if(dir.requiresMinkTomcat && !minkTomcatUnlocked) return false;
   return true;
 }
 function canSeeFile(file){
-  if(!hasClearance(file)) return false;
+  if(clearance() < (file.clearance || 1)) return false;
   if(file.hiddenForAshOverride && !ashOverrideUnlocked) return false;
+  if(file.hiddenForMinkTomcat && !minkTomcatUnlocked) return false;
+  if(file.hiddenForMinkTomcatDeep && !minkTomcatDeep) return false;
   return true;
 }
+
+/* Variant selection + inserts */
 function contentFor(file){
-  return file.variants ? (file.variants["*"] || "") : (file.content || "");
+  let base = "";
+  const roleStr = USERS[currentUser].role;
+  const isCmd = roleStr.includes("CLEARANCE IV");
+  const isOvr = roleStr.includes("CLEARANCE V");
+
+  if(file.variants){
+    if(isOvr && file.variants.OVERSIGHT) base = file.variants.OVERSIGHT;
+    else if(isCmd && file.variants.FIELD_COMMAND) base = file.variants.FIELD_COMMAND;
+    else base = file.variants["*"] || "";
+  } else {
+    base = file.content || "";
+  }
+
+  if(ashOverrideUnlocked && file.id.startsWith("DOSSIER-ASHLYNN")){
+    base += `
+
+------------------------------------------------------------
+LOCAL INSERT (UNLOGGED) — ARCHIVE NOTE
+------------------------------------------------------------
+Some markers exist without payload. Missing does not mean absent.`;
+  }
+
+  if(minkTomcatUnlocked && (file.id.startsWith("MED-0731-T") || file.id.startsWith("MISSION-0731"))){
+    base += `
+
+------------------------------------------------------------
+LOCAL INSERT (UNLOGGED) — MINK→TOMCAT
+------------------------------------------------------------
+Priority override: Tomcat stability correlates with team stability.`;
+  }
+
+  if(minkTomcatDeep && file.id.startsWith("INCIDENT-0731-D")){
+    base += `
+
+------------------------------------------------------------
+LOCAL INSERT (UNLOGGED) — DEEP CACHE
+------------------------------------------------------------
+I watched the moment it happened.`;
+  }
+
+  return base;
 }
 
 /* =========================
@@ -615,7 +764,13 @@ function renderNav(){
     nav.appendChild(el);
   });
 
-  document.getElementById("netPill").textContent = ashOverrideUnlocked ? "Node: LOCAL (OVERRIDE)" : "Node: LOCAL";
+  const flags = [
+    ashOverrideUnlocked ? "OVR:MINK" : null,
+    minkTomcatUnlocked ? "OVR:TOMCAT" : null,
+    minkTomcatDeep ? "OVR:DEEP" : null
+  ].filter(Boolean).join(" ");
+
+  document.getElementById("netPill").textContent = flags ? `Node: LOCAL (${flags})` : "Node: LOCAL";
 }
 
 function renderList(){
@@ -665,11 +820,14 @@ function openFile(f){
 
   const raw = contentFor(f);
   let body = escapeHtml(raw);
+
   if(redactOverlay){
     body = body.replace(/█{3,}/g, "████████");
   }
+
   viewBody.innerHTML = body.replace(/\n/g, "<br>");
   renderList();
+  viewBody.scrollTop = 0;
 }
 
 function clearViewer(){
@@ -707,11 +865,13 @@ function showAudit(){
       lines.push(`${e.ts}  |  ${String(e.action).padEnd(6," ")}  |  ${e.target}`);
     }
   }
+
   viewTitle.textContent = "AUDIT LOG";
   viewMeta.style.display = "none";
   viewMeta.innerHTML = "";
   viewBody.textContent = lines.join("\n");
   auditLog("OPEN", "AUDIT");
+  viewBody.scrollTop = 0;
 }
 
 /* =========================
@@ -725,7 +885,7 @@ function doLoginCore(){
   if(USERS[username] && USERS[username].pass === pass){
     currentUser = username;
 
-    who.textContent = "AUTHORIZED USER";      // no username shown
+    who.textContent = "AUTHORIZED USER";
     role.textContent = USERS[currentUser].role;
     sess.textContent = makeSessionTag();
     trace.textContent = "AUTH / " + Math.random().toString(16).slice(2,10).toUpperCase();
@@ -736,9 +896,11 @@ function doLoginCore(){
     keyBuffer = "";
 
     ashOverrideUnlocked = (localStorage.getItem("ASTF_ASH_OVERRIDE") === "1");
+    minkTomcatUnlocked = (localStorage.getItem("ASTF_MINK_TOMCAT") === "1");
+    minkTomcatDeep = (localStorage.getItem("ASTF_MINK_TOMCAT_DEEP") === "1");
 
     loginView.style.display = "none";
-    appView.style.display = "grid";
+    appView.style.display = "block";
 
     toast("ACCESS GRANTED");
     auditLog("AUTH", sess.textContent);
@@ -764,7 +926,6 @@ function doLoginWithLoader(){
 
   setTimeout(() => {
     doLoginCore();
-
     authLoad.style.display = "none";
     loginBtn.disabled = false;
     loginBtn.style.opacity = "1";
@@ -784,12 +945,20 @@ function doLogout(){
   u.value = "";
   p.value = "";
   err.style.display = "none";
-
   document.getElementById("netPill").textContent = "Node: LOCAL";
 }
 
+/* ESC to exit Kiyomi overlay */
+document.addEventListener("keydown", (e) => {
+  if(e.key === "Escape") hideKiyomi();
+});
+
 /* =========================
-   ASH EASTER EGG (typing "mink" unlocks recovered)
+   EASTER EGGS (stacked unlocks + KIYOMI)
+   1) "mink"
+   2) after mink: "tomcat" / "minktomcat" / "catlead"
+   3) after tomcat: "minkheart" / "stayclose" / "dontleavehim"
+   4) at any time: "kiyomi" => blackout + Cheshire smile overlay (ESC to return)
 ========================= */
 document.addEventListener("keydown", (e) => {
   if(!currentUser) return;
@@ -797,7 +966,7 @@ document.addEventListener("keydown", (e) => {
   const k = e.key.toLowerCase();
   if(k.length !== 1) return;
 
-  keyBuffer = (keyBuffer + k).slice(-10);
+  keyBuffer = (keyBuffer + k).slice(-32);
 
   if(!ashOverrideUnlocked && keyBuffer.includes("mink")){
     ashOverrideUnlocked = true;
@@ -805,7 +974,32 @@ document.addEventListener("keydown", (e) => {
     toast("LOCAL OVERRIDE ACCEPTED (MINK)");
     auditLog("OVR", "MINK");
     renderNav();
-    if(currentCategory === "recovered") renderList();
+    renderList();
+  }
+
+  if(ashOverrideUnlocked && !minkTomcatUnlocked &&
+    (keyBuffer.includes("tomcat") || keyBuffer.includes("minktomcat") || keyBuffer.includes("catlead"))){
+    minkTomcatUnlocked = true;
+    localStorage.setItem("ASTF_MINK_TOMCAT", "1");
+    toast("LOCAL OVERRIDE EXTENDED (TOMCAT)");
+    auditLog("OVR", "TOMCAT");
+    renderNav();
+    renderList();
+  }
+
+  if(minkTomcatUnlocked && !minkTomcatDeep &&
+    (keyBuffer.includes("minkheart") || keyBuffer.includes("stayclose") || keyBuffer.includes("dontleavehim"))){
+    minkTomcatDeep = true;
+    localStorage.setItem("ASTF_MINK_TOMCAT_DEEP", "1");
+    toast("LOCAL OVERRIDE: DEEP CACHE");
+    auditLog("OVR", "DEEP");
+    renderNav();
+    renderList();
+  }
+
+  // KIYOMI: blackout + Cheshire smile
+  if(keyBuffer.includes("kiyomi")){
+    showKiyomi();
   }
 });
 
@@ -816,7 +1010,6 @@ loginBtn.addEventListener("click", doLoginWithLoader);
 p.addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLoginWithLoader(); });
 
 logoutBtn.addEventListener("click", doLogout);
-
 clearSelectionBtn.addEventListener("click", clearViewer);
 showAuditBtn.addEventListener("click", showAudit);
 
@@ -841,11 +1034,6 @@ redactBtn.addEventListener("click", () => {
     if(f) openFile(f);
   }
 });
-
-/* INITIAL */
-(function init(){
-  viewTitle.textContent = "No file selected";
-})();
 </script>
 </body>
 </html>

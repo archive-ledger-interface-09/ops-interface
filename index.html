@@ -311,25 +311,18 @@
   }
   *::-webkit-scrollbar-thumb:hover{ background: rgba(156,196,255,.28); }
 
-  /* =========================
-     FORCE SCROLL (hard, reliable)
-     ========================= */
+  /* FORCE SCROLL (reliable) */
   .card { height: min(820px, calc(100vh - 90px)); }
   .app, .grid { height: 100%; }
   .left, .mid, .right { height: 100%; }
-
   .left { overflow: hidden; }
   #nav { overflow-y: auto; overflow-x:hidden; height: calc(100% - 250px); }
-
   .mid { overflow: hidden; }
   #list { overflow-y: auto; overflow-x:hidden; height: calc(100% - 56px); }
-
   .right { overflow: hidden; }
   #viewBody { overflow-y: auto; overflow-x:hidden; height: calc(100% - 86px); }
 
-  /* =========================
-     KIYOMI EASTER EGG OVERLAY
-     ========================= */
+  /* KIYOMI OVERLAY */
   #kiyomiOverlay{
     position: fixed;
     inset: 0;
@@ -352,8 +345,6 @@
     0%,100%{ transform: translateY(0px); opacity: .92; }
     50%{ transform: translateY(-10px); opacity: 1; }
   }
-
-  /* Eyes */
   #cheshireSmile::before,
   #cheshireSmile::after{
     content:"";
@@ -370,8 +361,6 @@
   }
   #cheshireSmile::before{ left: 30%; transform: rotate(-6deg); }
   #cheshireSmile::after{ right: 30%; transform: rotate(6deg); }
-
-  /* Smile */
   #cheshireSmile .smile{
     position:absolute;
     left: 50%;
@@ -386,8 +375,6 @@
     border-radius: 0 0 999px 999px;
     opacity: .95;
   }
-
-  /* Teeth ticks (subtle) */
   #cheshireSmile .teeth{
     position:absolute;
     left: 50%;
@@ -407,7 +394,6 @@
     height: 22px;
     background: rgba(156,196,255,.65);
   }
-
   #cheshireHint{
     position: fixed;
     bottom: 18px;
@@ -420,7 +406,6 @@
     z-index: 1000000;
   }
   #kiyomiOverlay.show + #cheshireHint{ display:block; }
-
 </style>
 </head>
 
@@ -541,16 +526,19 @@
   <div id="cheshireHint">Press ESC to return</div>
 
 <script>
+/*
+  NOTE (static site):
+  - Anyone can inspect page source.
+  - This is RP-visibility, not real security.
+  - UI does NOT display usernames, but usernames exist in code for login.
+*/
+
 const USERS = {
   "astf.secure.usercmd.tomcat.fieldlead.04": { pass:"ELSAILGRA", role:"FIELD COMMAND — CLEARANCE IV", clearance:4 },
   "astf.secure.userops.mink.technician.level2.17": { pass:"9dZzUPUK]kr*c2E3]r+shEd7", role:"TECH OPERATIONS — CLEARANCE II", clearance:2 },
   "astf.secure.userops.bd.combatmed.level2.09": { pass:"M1KUM1KUCALLMEM1KU", role:"COMBAT MEDICAL — CLEARANCE II", clearance:2 },
   "astf.secure.userops.johnny.private.level1.22": { pass:"H3R3C0M3SJ0HNNY", role:"FIELD SUPPORT — CLEARANCE I", clearance:1 },
-  "astf.secure.userovr.taskforce.oversight.level5.00": { pass:"TASKFORCE", role:"OVERSIGHT — CLEARANCE V", clearance:5 },
-
-  "astf.secure.userana.glassnode.unit03.level2.31": { pass:"GLASSNODE", role:"DATA ANALYSIS — CLEARANCE II", clearance:2 },
-  "astf.secure.userlog.quartermaster.unit.level1.71": { pass:"LOCKKEY71", role:"LOGISTICS — CLEARANCE I", clearance:1 },
-  "astf.secure.userovr.federal.liaison.redline.level5.02": { pass:"REDLINE", role:"FEDERAL OVERSIGHT — CLEARANCE V", clearance:5 }
+  "astf.secure.userovr.taskforce.oversight.level5.00": { pass:"TASKFORCE", role:"OVERSIGHT — CLEARANCE V", clearance:5 }
 };
 
 let currentUser = null;
@@ -558,15 +546,13 @@ let currentCategory = null;
 let activeFileId = null;
 let redactOverlay = false;
 
-/* Mink easter eggs */
-let ashOverrideUnlocked = false;      // typing "mink"
-let minkTomcatUnlocked = false;       // typing "tomcat" etc after mink
-let minkTomcatDeep = false;           // typing "minkheart" etc after tomcat unlock
+/* Easter egg flags (stored per browser) */
+let ashOverrideUnlocked = false;      // type "mink"
+let minkTomcatUnlocked = false;       // after mink: type "tomcat" / "minktomcat" / "catlead"
+let minkTomcatDeep = false;           // after tomcat: type "minkheart" / "stayclose" / "dontleavehim"
 let keyBuffer = "";
 
-/* =========================
-   DIRECTORIES
-========================= */
+/* Directories */
 function buildDirectories(){
   return [
     { id:"personnel", label:"Personnel Files", minClear:1 },
@@ -585,18 +571,755 @@ function buildDirectories(){
   ];
 }
 
-/* =========================
-   FILES (WORLD + DOSSIERS + MISSIONS + MORE)
-========================= */
+/* Files */
 const FILES = [
-  /* (snipped in this message for brevity)
-     Keep the exact FILES array from your previous version here.
-     Nothing else about the files needs to change for Kiyomi to work. */
+  /* LEGAL */
+  {
+    id:"LEGAL-NDA-0007 — CONTROLLED TRANSPARENCY AGREEMENT",
+    category:"legal",
+    clearance:1,
+    short:"ASTF NDA + disclosure boundaries (signed at induction)",
+    tags:["nda","legal","compliance","agreement","induction"],
+    content:
+`ANTI-SECRECY TASKFORCE (ASTF)
+CONTROLLED TRANSPARENCY AGREEMENT / NON-DISCLOSURE (NDA)
+Document ID: LEGAL-NDA-0007
+Version: 3.1
+
+PURPOSE
+Establishes controlled transparency boundaries for ASTF operations.
+
+RESTRICTED MATERIAL (NON-EXHAUSTIVE)
+- Tactical plans, routes, entry points, breach sequences
+- Secure communications procedures
+- Identifiers of protected or monitored subjects
+- Anomaly classification beyond Level II
+- Medical details beyond summary-level reporting
+- Compartment markers, oversight channel references
+
+PERMITTED DISCLOSURE (CONTROLLED)
+- Mission code + general outcome (when included in audit summary)
+- Approved language in civilian-facing documentation
+
+PROHIBITED DISCLOSURE
+- Any rationale for monitoring/protective placement of subjects
+- Any recovered fragments or non-indexed pointers
+
+ACKNOWLEDGEMENT
+Signature Field (On File): █████████████
+Date (On File): █████████`
+  },
+  {
+    id:"LEGAL-ETHICS-0002 — ETHICAL DISCLOSURE PROTOCOL (SUMMARY)",
+    category:"legal",
+    clearance:1,
+    short:"Field disclosure language guidance (civilian audit alignment)",
+    tags:["ethics","disclosure","protocol","summary"],
+    content:
+`LEGAL-ETHICS-0002
+ETHICAL DISCLOSURE PROTOCOL — SUMMARY
+
+Key Rule:
+If a detail is not explicitly approved for civilian audit, do not disclose it.
+
+Approved phrases:
+- "Operational details withheld under controlled transparency policy."
+- "Biometrics withheld to prevent civilian misuse."
+- "Compartmental rationale not available for field distribution."
+
+Reminder:
+Operational transparency does not equal operational vulnerability.`
+  },
+
+  /* INDEX / WORLD */
+  {
+    id:"REG-0001 — ACTIVE FILE REGISTER",
+    category:"index",
+    clearance:1,
+    short:"Directory overview / audit note",
+    tags:["register","index","active","overview"],
+    content:
+`REG-0001
+ACTIVE FILE REGISTER — ARCHIVE NODE
+
+Directories:
+- Personnel Files
+- Mission Archives
+- Mission Attachments
+- Incident Reports
+- Psychological Evaluations
+- Medical Reports
+- Training & Doctrine
+- Correspondence Logs
+- Legal & Compliance
+- Indices & Registers
+- Command-Restricted (conditional)
+- Recovered Fragments (conditional)
+
+Audit Notice:
+This node records access traces locally per session. External sync is disabled.`
+  },
+  {
+    id:"ORG-FOUNDATION — TASKFORCE ORIGIN BRIEF",
+    category:"index",
+    clearance:2,
+    short:"Formation history / anti-secrecy doctrine summary",
+    tags:["foundation","origin","doctrine"],
+    content:
+`ORG-FOUNDATION
+ANTI-SECRECY TASKFORCE — ORIGIN SUMMARY
+
+Established: 2009 (Post-Containment Disclosure Crisis)
+
+Mandate:
+Expose, neutralize, and dismantle unauthorized classified research entities operating beyond public accountability.
+
+Doctrine:
+Transparency under control. Audit allowed. Tactical reality protected.`
+  },
+  {
+    id:"IDX-MISSIONS — OPERATION INDEX",
+    category:"index",
+    clearance:1,
+    short:"Mission codes / statuses",
+    tags:["missions","index","operation","codes"],
+    content:
+`IDX-MISSIONS
+OPERATION INDEX
+
+MISSION-0731 — COLD GLASS — Completed (Compromised)
+MISSION-0712 — QUIET FERRY — Completed
+MISSION-0688 — SILVER STATIC — Completed
+MISSION-0651 — DRY VAULT — Completed (Restricted Addendum)
+MISSION-0744 — THIN WEATHER — Completed
+MISSION-0756 — LATTICE ROOM — Completed (Clean)
+MISSION-0763 — IRON HUSH — Completed
+MISSION-0769 — BLUE NEEDLE — Aborted
+MISSION-0781 — ASHEN SWITCH — Completed (Data Loss)`
+  },
+
+  /* COMMS */
+  {
+    id:"COMMS-WELCOME — ASTF ONBOARDING MESSAGE (AUTOMATED)",
+    category:"correspondence",
+    clearance:1,
+    short:"Automated welcome notice issued upon credential creation",
+    tags:["comms","welcome","onboarding","automated"],
+    content:
+`FROM: ASTF Internal Services (Automated)
+TO: Newly Credentialed Personnel
+SUBJECT: Credential Activation / Controlled Transparency Brief
+
+Your credentials have been issued and activated for ASTF Internal Records.
+
+If a file is compartmentalized, that is not an invitation to speculate. It is a directive to stop.
+
+Access is logged locally and reviewed during routine audit cycles.
+
+Welcome to the Anti-Secrecy Taskforce.
+Operational transparency does not equate to operational vulnerability.`
+  },
+  {
+    id:"COMMS-BULLETIN-014 — ‘CLEAN REPORTING’ REMINDER",
+    category:"correspondence",
+    clearance:1,
+    short:"Short bulletin about report hygiene",
+    tags:["bulletin","reporting","hygiene"],
+    content:
+`COMMS-BULLETIN-014
+
+Reminder:
+Reports are not diaries.
+
+- Do not editorialize.
+- Do not guess motives.
+- Do not write “it felt wrong” without measurable observation.
+- If you cannot identify a cause, label as UNCONFIRMED and stop.`
+  },
+
+  /* TRAINING */
+  {
+    id:"TRAIN-POCKET-01 — FIELD BRIEFING FORMAT (ONE-PAGE)",
+    category:"training",
+    clearance:1,
+    short:"How briefings are formatted",
+    tags:["training","briefing","format"],
+    content:
+`TRAIN-POCKET-01 — FIELD BRIEFING FORMAT
+
+1) Objective (1 sentence)
+2) Constraints (time / civilians / exposure risk)
+3) Roles (who does what)
+4) Failure modes (what if it goes wrong)
+5) Extraction plan (always)
+
+Rule:
+If you cannot justify saying a detail out loud, it does not belong in the briefing.`
+  },
+  {
+    id:"DOCTRINE-TRANSPARENCY — CIVILIAN AUDIT PROTOCOL",
+    category:"training",
+    clearance:1,
+    short:"Policy governing public file visibility",
+    tags:["doctrine","audit","civilian"],
+    content:
+`DOCTRINE-TRANSPARENCY
+
+Core Statement:
+Operational transparency does not equate to operational vulnerability.
+
+Policy:
+- Civilian-readable summaries must exist for all active operations.
+- Tactical details may be redacted.
+- Biometric identifiers remain restricted.
+- Monitoring rationale may be compartmentalized.`
+  },
+
+  /* PERSONNEL */
+  {
+    id:"DOSSIER-ASHLYNN / CALLSIGN: MINK",
+    category:"personnel",
+    clearance:2,
+    short:"Subject dossier — new recruit / tech specialization",
+    tags:["ashlynn","mink","dossier","canada","colorado"],
+    variants:{
+      "*":
+`ANTI-SECRECY TASKFORCE (ASTF)
+SUBJECT DOSSIER — ACTIVE INTAKE
+File Access: CIVILIAN AUDIT ENABLED (Partial Redaction)
+
+I. IDENTIFICATION
+Callsign: Mink
+Date of Birth: 09/18/████ (REDACTED)
+Place of Birth: BC, Canada
+Height: 5'5" (165 cm)
+Weight: 120 lbs (54 kg)
+Dominant Hand: Ambidextrous
+Distinguishing Marks: Scar (left facial plane)
+
+Medical Flags:
+- Selective IgA Deficiency (Primary Immunodeficiency)
+
+II. BACKGROUND SUMMARY
+Raised in Canada; relocated to Colorado during early adolescence (voluntary civilian migration).
+
+III. OPERATIONAL FUNCTION
+Primary:
+- Technical systems exploitation
+- Forensic reconstruction and field device stabilization
+Secondary:
+- Firearms support and controlled combat response
+
+Threat Assessment: Moderate (20+ verified)
+Projected Utility Index: Moderate–High (Pending Field Validation)
+
+IV. BEHAVIORAL PROFILE
+Controlled, observant, compliance-oriented.
+Risk: internalization under prolonged stress.
+Recommendation: observe during first three field rotations.
+
+V. PERFORMANCE RATINGS
+Tactical: B
+Endurance: B-
+Firearms: A-
+Analytical: A+
+Discretion: C+
+Team Integration: B+
+
+VII. DISCLOSURE STATEMENT
+Biometrics partially withheld to prevent misuse.
+Operational transparency does not equal operational vulnerability.`,
+      "FIELD_COMMAND":
+`ASTF — COMMAND VIEW
+SUBJECT DOSSIER: MINK
+
+Field Notes:
+- Technical exploitation reliable under time pressure.
+- Requires crisp tasking; confirmation loops reduce error.
+- Delayed stress response possible post-event (2–6 hr window).
+
+Medical:
+- Selective IgA Deficiency: avoid extended exposure cycles without recovery.`,
+      "OVERSIGHT":
+`ASTF — OVERSIGHT VIEW
+SUBJECT DOSSIER: MINK
+
+Subject is under protection and monitored status.
+Rationale is compartmentalized under separate authority channel.
+Do not disclose rationale in standard briefings.
+
+Directive:
+Maintain placement under supervised team structure. Passive monitoring only.`
+    }
+  },
+  {
+    id:"DOSSIER-TOMCAT — COMMAND PROFILE",
+    category:"personnel",
+    clearance:4,
+    short:"Command profile / engagement conduct",
+    tags:["tomcat","lt","command","profile"],
+    content:
+`ASTF
+COMMAND DOSSIER — RESTRICTED
+
+Subject: Lt. Tomcat
+Clearance: IV
+
+Operational Notes:
+- Maintains extraction integrity under threat.
+- Consistent command discipline.
+- High tolerance for operational ambiguity.
+
+Restrictions:
+Not available for civilian audit.`
+  },
+  {
+    id:"DOSSIER-JOHNNY — SERVICE RECORD (LIMITED)",
+    category:"personnel",
+    clearance:1,
+    short:"Service record / detainee event flag",
+    tags:["johnny","private","service","record"],
+    content:
+`ASTF — SERVICE RECORD (LIMITED)
+
+Subject: Johnny
+Role: Private
+
+Notations:
+- Detainment event flagged (see PSY-EVAL-0731-J).
+- Reassignment pending periodic review.
+
+Civilian Audit:
+Summary only.`
+  },
+  {
+    id:"DOSSIER-BD — MEDICAL OPERATIONS PROFILE",
+    category:"personnel",
+    clearance:2,
+    short:"Combat medic capabilities / triage reliability",
+    tags:["bd","medic","triage","dossier"],
+    content:
+`ASTF — MEDICAL OPS PROFILE
+
+Subject: BD
+Specialty: Combat Medic (Field)
+
+Operational Notes:
+- Rapid triage prioritization.
+- Sterile discipline under stress.
+- Reliable team integration under supervised structure.`
+  },
+
+  /* MISSIONS */
+  {
+    id:"MISSION-0731 — OPERATION: COLD GLASS",
+    category:"missions",
+    clearance:2,
+    short:"Facility raid / containment breach / extraction compromised",
+    tags:["mission","0731","cold glass","lab","raid"],
+    content:
+`MISSION-0731
+Operation: Cold Glass
+Status: Completed (Compromised)
+
+Participants:
+- Lt. Tomcat
+- Operative Ash (Mink)
+- Private Johnny
+
+Summary:
+Hostile resistance encountered. ~20 confirmed fatalities.
+Containment breach triggered during vault access.
+Multiple anomalies released during structural failure.
+
+Notes:
+- Tomcat injured during breach phase.
+- Ash: acute stress recorded.
+- Johnny: detained during retreat; later extracted.`
+  },
+  {
+    id:"MISSION-0744 — OPERATION: THIN WEATHER",
+    category:"missions",
+    clearance:1,
+    short:"Storage audit / low contact / odd weight variance",
+    tags:["mission","0744","thin weather"],
+    content:
+`MISSION-0744
+Status: Completed
+
+Objective:
+Audit suspected storage node used for unregistered containment materials.
+
+Outcome:
+Materials confiscated. No engagement.
+
+Note:
+One container logged as "EMPTY" despite measurable mass variance.`
+  },
+  {
+    id:"MISSION-0756 — OPERATION: LATTICE ROOM",
+    category:"missions",
+    clearance:2,
+    short:"Office suite sweep / encrypted host / quick extraction",
+    tags:["mission","0756","lattice room"],
+    content:
+`MISSION-0756
+Status: Completed (Clean)
+
+Objective:
+Secure encrypted host machine used for compartmental traffic routing.
+
+Outcome:
+Host seized; keys partially recovered.
+No casualties reported.
+Civilian exposure: none confirmed.
+
+Addendum:
+Recovered keyset contained a redundant phrase repeated 43x:
+"WE DID NOT SIGN UP FOR THIS."`
+  },
+  {
+    id:"MISSION-0769 — OPERATION: BLUE NEEDLE",
+    category:"missions",
+    clearance:1,
+    short:"Aborted due to civilian density / exposure risk",
+    tags:["mission","0769","blue needle"],
+    content:
+`MISSION-0769
+Status: Aborted
+
+Reason:
+Civilian density exceeded threshold.
+Exposure risk unacceptable.
+
+Note:
+Abort decisions are successes when they prevent collateral.`
+  },
+  {
+    id:"MISSION-0781 — OPERATION: ASHEN SWITCH",
+    category:"missions",
+    clearance:3,
+    short:"Comms blackout / data loss / internal review ongoing",
+    tags:["mission","0781","ashen switch"],
+    content:
+`MISSION-0781
+Status: Completed (Data Loss)
+
+Summary:
+Target site entered and cleared.
+Primary payload recovered.
+On exfil, comms blackout occurred for 4m 13s.
+Post-event: partial telemetry missing.
+
+Directive:
+Do not attempt reconstruction without forensic oversight.`
+  },
+
+  /* ATTACHMENTS */
+  {
+    id:"ATTACH-0731-A — ENTRY PLAN (REDACTED)",
+    category:"attachments",
+    clearance:2,
+    short:"Ingress / breach outline (text export)",
+    tags:["attach","0731","entry","plan"],
+    content:
+`ATTACH-0731-A — ENTRY PLAN (TEXT EXPORT)
+
+Ingress Window:
+02:10–02:14 local
+
+Breach Outline:
+1) External access bypass (Mink)
+2) Corridor sweep (Tomcat / Johnny)
+3) Primary door forced entry
+4) Vault approach contingent on resistance level
+
+Certain schematics withheld under compartment rules.`
+  },
+  {
+    id:"ANOM-PRIMER — ANOMALY CLASSIFICATION GUIDE",
+    category:"attachments",
+    clearance:2,
+    short:"Internal classification overview",
+    tags:["anomaly","classification","guide"],
+    content:
+`ANOM-PRIMER
+
+Level I: Environmental distortion
+Level II: Biological alteration
+Level III: Cognitive disruption entity
+Level IV: Autonomous containment-resistant anomaly
+
+Disclosure risk increases sharply beyond Level III.`
+  },
+
+  /* INCIDENT */
+  {
+    id:"INCIDENT-0731-B — DETAINMENT / INTERROGATION (JOHNNY)",
+    category:"incident",
+    clearance:4,
+    short:"Command-only incident log",
+    tags:["incident","interrogation","detainment","johnny","0731"],
+    content:
+`INCIDENT-0731-B (CL-IV)
+
+Subject: Johnny
+Event: Detainment during Operation Cold Glass
+Duration: ~17 hours
+Evidence: prolonged interrogation and physical torture
+
+Recommendation:
+Immediate psychological evaluation.
+Temporary removal from active operations pending assessment outcome.`
+  },
+  {
+    id:"INCIDENT-0731-D — INJURY CAUSATION NOTE (TOMCAT)",
+    category:"incident",
+    clearance:3,
+    short:"Overhead strike + lower-back stab attribution",
+    tags:["injury","tomcat","breach","0731"],
+    content:
+`INCIDENT-0731-D (CL-III)
+
+Subject: Lt. Tomcat
+
+Attribution:
+- Cranial injury consistent with single overhead blunt strike in close quarters.
+- Lower back wound consistent with opportunistic stab during movement compression.
+
+Conclusion:
+Injuries sustained during active protection maneuver of trailing personnel.`
+  },
+  {
+    id:"INCIDENT-0781-A — TELEMETRY GAP (BLACKOUT)",
+    category:"incident",
+    clearance:3,
+    short:"Comms blackout analysis request",
+    tags:["incident","telemetry","blackout","0781"],
+    content:
+`INCIDENT-0781-A (CL-III)
+
+Event:
+Comms blackout for 4m 13s during Operation Ashen Switch.
+
+Observations:
+- No device failures detected after reconnect.
+- Local timestamps show discontinuity.
+
+Request:
+Forensic reconstruction; check for synthetic gap insertion.`
+  },
+
+  /* PSYCH */
+  {
+    id:"PSY-EVAL-0731-J — POST-DETENTION ASSESSMENT (JOHNNY)",
+    category:"psych",
+    clearance:2,
+    short:"Post-event psychological assessment",
+    tags:["psych","eval","johnny","detention","0731"],
+    content:
+`PSY-EVAL-0731-J
+
+Presenting:
+Hypervigilance, sleep disruption, dissociative response patterns.
+
+Assessment:
+Moderate instability under confinement conditions.
+High functional output when given structured tasking.
+
+Restrictions:
+Avoid solo containment assignments pending re-evaluation.`
+  },
+  {
+    id:"PSY-OBS-0731-A — ACUTE STRESS NOTE (MINK)",
+    category:"psych",
+    clearance:2,
+    short:"Witnessed command injury / delayed response risk",
+    tags:["psych","mink","stress","0731"],
+    content:
+`PSY-OBS-0731-A
+
+Event:
+Witnessed commanding officer sustain injury during breach.
+
+Notes:
+Acute stress response recorded during debrief.
+Delayed affect. Shallow breathing. Tremor.
+
+Recommendation:
+Decompression check within 24 hours post high-casualty events.`
+  },
+
+  /* MEDICAL */
+  {
+    id:"MED-0731-T — INJURY SUMMARY (TOMCAT)",
+    category:"medical",
+    clearance:2,
+    short:"Field injury log / recovery estimate",
+    tags:["medical","tomcat","injury","0731"],
+    content:
+`MED-0731-T
+
+Subject: Lt. Tomcat
+Event: Operation Cold Glass
+
+Injuries:
+- Blunt force trauma (cranial) / concussion (Grade I)
+- Penetrating wound: lower back (single entry)
+- Two fractured ribs
+- Deep shoulder laceration (sutured)
+- Soft tissue bruising (multiple sites)
+
+Recovery Estimate:
+14–21 days
+
+Note:
+Subject refused temporary removal from operations (command override initiated).`
+  },
+
+  /* COMMAND (Tomcat access) */
+  {
+    id:"CMD-0731 — AFTER-ACTION DIRECTIVE (FIELD COMMAND)",
+    category:"command",
+    clearance:4,
+    short:"Post-event directive / training adjustments",
+    tags:["command","directive","after action","0731"],
+    content:
+`CMD-0731 — COMMAND CHANNEL
+
+Directive:
+- Maintain extraction fallback route at all times.
+- Tech operator remains behind primary cover until breach integrity is confirmed.
+- Reduce solo corridor pushes during unknown facility sweeps.
+
+Medical Constraint:
+Concussion monitoring mandatory 72 hours post-event.
+
+Note:
+No discussion of oversight compartments in field briefings.`
+  },
+  {
+    id:"MEMO-OVERSIGHT-112 — FEDERAL TENSION NOTICE",
+    category:"command",
+    clearance:4,
+    short:"Inter-agency friction advisory",
+    tags:["memo","oversight","federal"],
+    content:
+`MEMO-OVERSIGHT-112
+
+Federal oversight divisions have expressed concern regarding ASTF partial disclosures.
+Directive: Continue controlled transparency.
+Do not engage in public escalation without Oversight Channel V.`
+  },
+  {
+    id:"FLAG-OVR-ASH — MONITORING STATUS (MARKER ONLY)",
+    category:"command",
+    clearance:4,
+    short:"Oversight marker only (no rationale)",
+    tags:["ash","monitoring","flag"],
+    content:
+`FLAG-OVR-ASH
+
+Status: Passive Monitoring
+Exposure Risk: Low
+
+Note:
+Do not disclose monitoring rationale unless trigger criteria are met.`
+  },
+
+  /* RECOVERED (Mink unlock) */
+  {
+    id:"FRAGMENT-ASH-01 — DIRECTORY LEAK (PARTIAL)",
+    category:"recovered",
+    clearance:2,
+    short:"Local cache residue / unlogged access trace",
+    tags:["fragment","recovered","leak","mink"],
+    hiddenForAshOverride:true,
+    content:
+`FRAGMENT-ASH-01
+
+Extract:
+- Protection status referenced in oversight channel.
+- Trigger criteria mentioned (details withheld).
+- Secondary pointer: ██████-████ (unresolved)
+
+NOTE:
+Fragment is incomplete and may be intentionally corrupted.`
+  },
+  {
+    id:"FRAGMENT-ASH-02 — OVERSIGHT TAG (UNVERIFIED)",
+    category:"recovered",
+    clearance:3,
+    short:"Classification marker / missing payload",
+    tags:["fragment","oversight","tag","unverified"],
+    hiddenForAshOverride:true,
+    content:
+`FRAGMENT-ASH-02
+
+Marker exists without attached content.
+May indicate decoy record or intentionally empty pointer.`
+  },
+
+  /* MINK TOMCAT CACHE (unindexed) */
+  {
+    id:"CACHE-MINK-TOMCAT-01 — FIELD NOTE (UNFILED)",
+    category:"mink_cache",
+    clearance:2,
+    short:"Unindexed note stub / command-adjacent",
+    tags:["cache","mink","tomcat","unfiled"],
+    hiddenForMinkTomcat:true,
+    content:
+`LOCAL CACHE — UNFILED NOTE
+
+This entry does not exist in the register.
+Timestamp coherence: questionable.
+
+Content:
+If Tomcat says move, you move.
+If Tomcat says stop, you stop.
+If you hesitate, you become an exposure risk.
+
+(Why is this here?)`
+  },
+  {
+    id:"CACHE-MINK-TOMCAT-02 — EQUIPMENT CHECKLIST (PERSONAL)",
+    category:"mink_cache",
+    clearance:2,
+    short:"Checklist that is too specific to be standard issue",
+    tags:["cache","checklist","mink","tomcat"],
+    hiddenForMinkTomcat:true,
+    content:
+`LOCAL CACHE — PERSONAL CHECKLIST
+
+Before stepping into a corridor:
+- verify Tomcat’s comm is live
+- verify Tomcat’s dominant hand free
+- verify Tomcat’s back plate seated
+- verify Tomcat’s breathing cadence (count 4 in / 4 out)
+
+Note:
+This is not an ASTF form.`
+  },
+  {
+    id:"CACHE-MINK-TOMCAT-03 — ‘DO NOT LOG THIS’ (ADDENDUM)",
+    category:"mink_cache",
+    clearance:3,
+    short:"Deep cache content",
+    tags:["cache","deep","mink","tomcat"],
+    hiddenForMinkTomcatDeep:true,
+    content:
+`LOCAL CACHE — DO NOT LOG THIS
+
+I can do the doors. I can do the wires. I can do the noise.
+But when he gets hurt I feel like the whole system goes quiet
+and I’m the only one who can hear it.
+
+Recommendation (improper):
+Keep him alive. That’s the mission.`
+  }
 ];
 
-/* =========================
-   UTILS
-========================= */
+/* Utils */
 function escapeHtml(str){
   return String(str)
     .replaceAll("&","&amp;")
@@ -622,12 +1345,12 @@ function toast(msg){
   setTimeout(()=> t.classList.remove("show"), 2600);
 }
 
-/* Kiyomi overlay controls */
+/* Kiyomi overlay */
 function showKiyomi(){
   const ov = document.getElementById("kiyomiOverlay");
   if(!ov) return;
   ov.classList.add("show");
-  auditLog("OVR", "KIYOMI");
+  auditLog("OVR","KIYOMI");
 }
 function hideKiyomi(){
   const ov = document.getElementById("kiyomiOverlay");
@@ -635,7 +1358,7 @@ function hideKiyomi(){
   ov.classList.remove("show");
 }
 
-/* Local audit (per device) */
+/* Audit (local, per browser + per account) */
 function auditKey(){ return `ASTF_AUDIT_${currentUser || "none"}`; }
 function auditLog(action, target){
   if(!currentUser) return;
@@ -643,35 +1366,39 @@ function auditLog(action, target){
   const key = auditKey();
   const prev = JSON.parse(localStorage.getItem(key) || "[]");
   prev.unshift(entry);
-  localStorage.setItem(key, JSON.stringify(prev.slice(0, 160)));
+  localStorage.setItem(key, JSON.stringify(prev.slice(0, 180)));
   trace.textContent = `${action}${target ? " / " + target : ""}`;
 }
 
-/* =========================
-   ACCESS CONTROL
-========================= */
+/* Access */
 function clearance(){ return USERS[currentUser].clearance; }
 
 function isDirAllowed(dir){
   if(clearance() < dir.minClear) return false;
-  if(dir.requiresAshOverride && !ashOverrideUnlocked) return false;
-  if(dir.requiresMinkTomcat && !minkTomcatUnlocked) return false;
+  if(dir.requiresAshOverride === true && !ashOverrideUnlocked) return false;
+  if(dir.requiresMinkTomcat === true && !minkTomcatUnlocked) return false;
   return true;
 }
+
+/* CRITICAL FIX: only block when flag is explicitly true */
 function canSeeFile(file){
-  if(clearance() < (file.clearance || 1)) return false;
-  if(file.hiddenForAshOverride && !ashOverrideUnlocked) return false;
-  if(file.hiddenForMinkTomcat && !minkTomcatUnlocked) return false;
-  if(file.hiddenForMinkTomcatDeep && !minkTomcatDeep) return false;
+  const fileClear = (file.clearance ?? 1);
+  if(clearance() < fileClear) return false;
+
+  if(file.hiddenForAshOverride === true && !ashOverrideUnlocked) return false;
+  if(file.hiddenForMinkTomcat === true && !minkTomcatUnlocked) return false;
+  if(file.hiddenForMinkTomcatDeep === true && !minkTomcatDeep) return false;
+
   return true;
 }
 
 /* Variant selection + inserts */
 function contentFor(file){
   let base = "";
-  const roleStr = USERS[currentUser].role;
-  const isCmd = roleStr.includes("CLEARANCE IV");
-  const isOvr = roleStr.includes("CLEARANCE V");
+  const roleStr = (USERS[currentUser].role || "");
+
+  const isCmd = roleStr.includes("FIELD COMMAND") || roleStr.includes("COMMAND");
+  const isOvr = roleStr.includes("OVERSIGHT");
 
   if(file.variants){
     if(isOvr && file.variants.OVERSIGHT) base = file.variants.OVERSIGHT;
@@ -687,7 +1414,8 @@ function contentFor(file){
 ------------------------------------------------------------
 LOCAL INSERT (UNLOGGED) — ARCHIVE NOTE
 ------------------------------------------------------------
-Some markers exist without payload. Missing does not mean absent.`;
+Some markers exist without payload. Missing does not mean absent.
+If a record is blank, it may be stored elsewhere under a different key.`;
   }
 
   if(minkTomcatUnlocked && (file.id.startsWith("MED-0731-T") || file.id.startsWith("MISSION-0731"))){
@@ -696,7 +1424,9 @@ Some markers exist without payload. Missing does not mean absent.`;
 ------------------------------------------------------------
 LOCAL INSERT (UNLOGGED) — MINK→TOMCAT
 ------------------------------------------------------------
-Priority override: Tomcat stability correlates with team stability.`;
+Priority override: Tomcat stability correlates with team stability.
+If Tomcat is down, extraction plan becomes liability.
+Do not leave him in a corridor.`;
   }
 
   if(minkTomcatDeep && file.id.startsWith("INCIDENT-0731-D")){
@@ -705,22 +1435,20 @@ Priority override: Tomcat stability correlates with team stability.`;
 ------------------------------------------------------------
 LOCAL INSERT (UNLOGGED) — DEEP CACHE
 ------------------------------------------------------------
-I watched the moment it happened.`;
+I watched the moment it happened.
+I keep replaying it like a clipped feed I can’t delete.`;
   }
 
   return base;
 }
 
-/* =========================
-   UI HOOKS
-========================= */
+/* UI hooks */
 const loginView = document.getElementById("loginView");
 const appView = document.getElementById("appView");
 const err = document.getElementById("err");
 const u = document.getElementById("u");
 const p = document.getElementById("p");
 const loginBtn = document.getElementById("loginBtn");
-
 const authLoad = document.getElementById("authLoad");
 const authLoadBar = document.getElementById("authLoadBar");
 
@@ -744,9 +1472,6 @@ const showAuditBtn = document.getElementById("showAuditBtn");
 const copyBtn = document.getElementById("copyBtn");
 const redactBtn = document.getElementById("redactBtn");
 
-/* =========================
-   RENDER
-========================= */
 function directoryLabel(cat){
   const d = buildDirectories().find(x => x.id === cat);
   return d ? d.label : cat;
@@ -777,7 +1502,7 @@ function renderList(){
   const q = search.value.trim().toLowerCase();
   const files = FILES
     .filter(f => f.category === currentCategory)
-    .filter(canSeeFile)
+    .filter(f => canSeeFile(f))
     .filter(f => {
       if(!q) return true;
       const blob = `${f.id} ${f.short||""} ${(f.tags||[]).join(" ")} ${contentFor(f)}`.toLowerCase();
@@ -796,7 +1521,7 @@ function renderList(){
     el.innerHTML = `
       <div class="itemTop">
         <div class="fname">${escapeHtml(f.id)}</div>
-        <div class="metaSmall">CL-${f.clearance || 1}</div>
+        <div class="metaSmall">CL-${escapeHtml(String(f.clearance ?? 1))}</div>
       </div>
       <div class="desc">${f.short ? "Summary: " + escapeHtml(f.short) : ""}</div>
     `;
@@ -814,7 +1539,7 @@ function openFile(f){
   viewMeta.style.display = "grid";
   viewMeta.innerHTML = `
     <div>Directory: ${escapeHtml(currentCategory)}</div>
-    <div>Clearance Required: ${escapeHtml(String(f.clearance || 1))}</div>
+    <div>Clearance Required: ${escapeHtml(String(f.clearance ?? 1))}</div>
     <div>Timestamp: ${escapeHtml(nowStamp())}</div>
   `;
 
@@ -865,18 +1590,14 @@ function showAudit(){
       lines.push(`${e.ts}  |  ${String(e.action).padEnd(6," ")}  |  ${e.target}`);
     }
   }
-
   viewTitle.textContent = "AUDIT LOG";
   viewMeta.style.display = "none";
   viewMeta.innerHTML = "";
   viewBody.textContent = lines.join("\n");
-  auditLog("OPEN", "AUDIT");
+  auditLog("OPEN","AUDIT");
   viewBody.scrollTop = 0;
 }
 
-/* =========================
-   LOGIN WITH LOADER
-========================= */
 function doLoginCore(){
   err.style.display = "none";
   const username = u.value.trim();
@@ -885,6 +1606,7 @@ function doLoginCore(){
   if(USERS[username] && USERS[username].pass === pass){
     currentUser = username;
 
+    // UI: do not reveal username
     who.textContent = "AUTHORIZED USER";
     role.textContent = USERS[currentUser].role;
     sess.textContent = makeSessionTag();
@@ -895,6 +1617,7 @@ function doLoginCore(){
     redactOverlay = false;
     keyBuffer = "";
 
+    // Load unlock flags from this browser
     ashOverrideUnlocked = (localStorage.getItem("ASTF_ASH_OVERRIDE") === "1");
     minkTomcatUnlocked = (localStorage.getItem("ASTF_MINK_TOMCAT") === "1");
     minkTomcatDeep = (localStorage.getItem("ASTF_MINK_TOMCAT_DEEP") === "1");
@@ -906,6 +1629,7 @@ function doLoginCore(){
     auditLog("AUTH", sess.textContent);
 
     renderNav();
+    // Default landing: index for high clearance, personnel otherwise
     loadCategory(clearance() >= 4 ? "index" : "personnel");
   } else {
     err.style.display = "block";
@@ -934,7 +1658,7 @@ function doLoginWithLoader(){
 }
 
 function doLogout(){
-  auditLog("LOGOUT", "");
+  auditLog("LOGOUT","");
   currentUser = null;
   currentCategory = null;
   activeFileId = null;
@@ -948,64 +1672,7 @@ function doLogout(){
   document.getElementById("netPill").textContent = "Node: LOCAL";
 }
 
-/* ESC to exit Kiyomi overlay */
-document.addEventListener("keydown", (e) => {
-  if(e.key === "Escape") hideKiyomi();
-});
-
-/* =========================
-   EASTER EGGS (stacked unlocks + KIYOMI)
-   1) "mink"
-   2) after mink: "tomcat" / "minktomcat" / "catlead"
-   3) after tomcat: "minkheart" / "stayclose" / "dontleavehim"
-   4) at any time: "kiyomi" => blackout + Cheshire smile overlay (ESC to return)
-========================= */
-document.addEventListener("keydown", (e) => {
-  if(!currentUser) return;
-
-  const k = e.key.toLowerCase();
-  if(k.length !== 1) return;
-
-  keyBuffer = (keyBuffer + k).slice(-32);
-
-  if(!ashOverrideUnlocked && keyBuffer.includes("mink")){
-    ashOverrideUnlocked = true;
-    localStorage.setItem("ASTF_ASH_OVERRIDE", "1");
-    toast("LOCAL OVERRIDE ACCEPTED (MINK)");
-    auditLog("OVR", "MINK");
-    renderNav();
-    renderList();
-  }
-
-  if(ashOverrideUnlocked && !minkTomcatUnlocked &&
-    (keyBuffer.includes("tomcat") || keyBuffer.includes("minktomcat") || keyBuffer.includes("catlead"))){
-    minkTomcatUnlocked = true;
-    localStorage.setItem("ASTF_MINK_TOMCAT", "1");
-    toast("LOCAL OVERRIDE EXTENDED (TOMCAT)");
-    auditLog("OVR", "TOMCAT");
-    renderNav();
-    renderList();
-  }
-
-  if(minkTomcatUnlocked && !minkTomcatDeep &&
-    (keyBuffer.includes("minkheart") || keyBuffer.includes("stayclose") || keyBuffer.includes("dontleavehim"))){
-    minkTomcatDeep = true;
-    localStorage.setItem("ASTF_MINK_TOMCAT_DEEP", "1");
-    toast("LOCAL OVERRIDE: DEEP CACHE");
-    auditLog("OVR", "DEEP");
-    renderNav();
-    renderList();
-  }
-
-  // KIYOMI: blackout + Cheshire smile
-  if(keyBuffer.includes("kiyomi")){
-    showKiyomi();
-  }
-});
-
-/* =========================
-   BUTTONS / WIRING
-========================= */
+/* Buttons */
 loginBtn.addEventListener("click", doLoginWithLoader);
 p.addEventListener("keydown", (e)=>{ if(e.key === "Enter") doLoginWithLoader(); });
 
@@ -1034,6 +1701,60 @@ redactBtn.addEventListener("click", () => {
     if(f) openFile(f);
   }
 });
+
+/* ESC closes Kiyomi overlay */
+document.addEventListener("keydown",(e)=>{
+  if(e.key === "Escape") hideKiyomi();
+});
+
+/* Easter eggs */
+document.addEventListener("keydown", (e) => {
+  if(!currentUser) return;
+
+  const k = e.key.toLowerCase();
+  if(k.length !== 1) return;
+
+  keyBuffer = (keyBuffer + k).slice(-32);
+
+  if(!ashOverrideUnlocked && keyBuffer.includes("mink")){
+    ashOverrideUnlocked = true;
+    localStorage.setItem("ASTF_ASH_OVERRIDE","1");
+    toast("LOCAL OVERRIDE ACCEPTED (MINK)");
+    auditLog("OVR","MINK");
+    renderNav();
+    renderList();
+  }
+
+  if(ashOverrideUnlocked && !minkTomcatUnlocked &&
+     (keyBuffer.includes("tomcat") || keyBuffer.includes("minktomcat") || keyBuffer.includes("catlead"))){
+    minkTomcatUnlocked = true;
+    localStorage.setItem("ASTF_MINK_TOMCAT","1");
+    toast("LOCAL OVERRIDE EXTENDED (TOMCAT)");
+    auditLog("OVR","TOMCAT");
+    renderNav();
+    renderList();
+  }
+
+  if(minkTomcatUnlocked && !minkTomcatDeep &&
+     (keyBuffer.includes("minkheart") || keyBuffer.includes("stayclose") || keyBuffer.includes("dontleavehim"))){
+    minkTomcatDeep = true;
+    localStorage.setItem("ASTF_MINK_TOMCAT_DEEP","1");
+    toast("LOCAL OVERRIDE: DEEP CACHE");
+    auditLog("OVR","DEEP");
+    renderNav();
+    renderList();
+  }
+
+  // KIYOMI
+  if(keyBuffer.includes("kiyomi")){
+    showKiyomi();
+  }
+});
+
+/* Init */
+(function init(){
+  viewTitle.textContent = "No file selected";
+})();
 </script>
 </body>
 </html>
